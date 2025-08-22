@@ -1,0 +1,568 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { WalletConnectButton } from "@/components/wallet-connect-button"
+import { useWeb3 } from "@/lib/web3-context"
+import { auctionContract } from "@/lib/auction-contract"
+import {
+  Clock,
+  TrendingUp,
+  Users,
+  Shield,
+  ChevronLeft,
+  ExternalLink,
+  Calendar,
+  Globe,
+  History,
+  Gavel,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+
+interface BidHistory {
+  id: string
+  bidder: string
+  amount: number
+  timestamp: string
+  txHash: string
+}
+
+interface DomainInfo {
+  registrationDate: string
+  expiryDate: string
+  registrar: string
+  dnsRecords: string[]
+  whoisInfo: string
+}
+
+interface Auction {
+  id: string
+  domain: string
+  currentBid: number
+  timeLeft: string
+  timeLeftHours: number
+  bidders: number
+  verified: boolean
+  category: string
+  status: "live" | "ending-soon" | "new"
+  startingBid: number
+  description: string
+  domainInfo: DomainInfo
+  bidHistory: BidHistory[]
+  totalBids: number
+  reservePrice: number
+  reserveMet: boolean
+}
+
+export default function AuctionDetailPage() {
+  const params = useParams()
+  const { account, isConnected } = useWeb3()
+  const [bidAmount, setBidAmount] = useState("")
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [isPlacingBid, setIsPlacingBid] = useState(false)
+  const [bidError, setBidError] = useState<string | null>(null)
+  const [bidSuccess, setBidSuccess] = useState<string | null>(null)
+
+  // Mock auction data - in real app, this would be fetched based on params.id
+  const auction: Auction = {
+    id: params.id as string,
+    domain: "crypto.eth",
+    currentBid: 12.5,
+    timeLeft: "2d 14h 23m",
+    timeLeftHours: 62,
+    bidders: 23,
+    verified: true,
+    category: "Finance",
+    status: "live",
+    startingBid: 5.0,
+    description:
+      "Premium crypto domain perfect for DeFi projects, exchanges, or crypto-related businesses. This domain has significant SEO value and brand recognition in the cryptocurrency space.",
+    reservePrice: 10.0,
+    reserveMet: true,
+    totalBids: 47,
+    domainInfo: {
+      registrationDate: "2019-03-15",
+      expiryDate: "2025-03-15",
+      registrar: "ENS Domains",
+      dnsRecords: ["A: 192.168.1.1", "CNAME: www.crypto.eth"],
+      whoisInfo: "Domain registered through ENS protocol",
+    },
+    bidHistory: [
+      {
+        id: "1",
+        bidder: "0x1234...5678",
+        amount: 12.5,
+        timestamp: "2024-01-20 14:30:00",
+        txHash: "0xabcd...efgh",
+      },
+      {
+        id: "2",
+        bidder: "0x9876...5432",
+        amount: 11.8,
+        timestamp: "2024-01-20 13:45:00",
+        txHash: "0x1234...abcd",
+      },
+      {
+        id: "3",
+        bidder: "0x5555...7777",
+        amount: 10.2,
+        timestamp: "2024-01-20 12:15:00",
+        txHash: "0x9999...1111",
+      },
+      {
+        id: "4",
+        bidder: "0x3333...9999",
+        amount: 9.5,
+        timestamp: "2024-01-20 11:30:00",
+        txHash: "0x7777...3333",
+      },
+      {
+        id: "5",
+        bidder: "0x1111...2222",
+        amount: 8.7,
+        timestamp: "2024-01-20 10:45:00",
+        txHash: "0x5555...8888",
+      },
+    ],
+  }
+
+  // Mock countdown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft({
+        days: 2,
+        hours: 14,
+        minutes: 23,
+        seconds: Math.floor(Math.random() * 60),
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ending-soon":
+        return "bg-red-500/10 text-red-400 border-red-500/20"
+      case "new":
+        return "bg-blue-500/10 text-blue-400 border-blue-500/20"
+      default:
+        return "bg-primary/10 text-primary border-primary/20"
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "ending-soon":
+        return "Ending Soon"
+      case "new":
+        return "New"
+      default:
+        return "Live"
+    }
+  }
+
+  const handlePlaceBid = async () => {
+    if (!isConnected || !account) {
+      return
+    }
+
+    setBidError(null)
+    setBidSuccess(null)
+    setIsPlacingBid(true)
+
+    try {
+      const result = await auctionContract.placeBid(auction.id, Number.parseFloat(bidAmount), account)
+
+      if (result.success) {
+        setBidSuccess(`Bid placed successfully! Transaction: ${result.txHash}`)
+        setBidAmount("")
+      } else {
+        setBidError(result.error || "Failed to place bid")
+      }
+    } catch (error) {
+      setBidError("An unexpected error occurred")
+    } finally {
+      setIsPlacingBid(false)
+    }
+  }
+
+  const minBidAmount = auction.currentBid + 0.1
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <nav className="border-b border-border/50 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">G</span>
+              </div>
+              <span className="text-xl font-bold text-foreground">GogoBid</span>
+            </Link>
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="/auctions" className="text-primary font-medium">
+                Auctions
+              </Link>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                How it Works
+              </a>
+              <Link href="/submit" className="text-muted-foreground hover:text-foreground transition-colors">
+                Submit Domain
+              </Link>
+            </div>
+            <WalletConnectButton className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent" />
+          </div>
+        </div>
+      </nav>
+
+      {/* Breadcrumb */}
+      <div className="border-b border-border/50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center space-x-2 text-sm">
+            <Link href="/auctions" className="text-muted-foreground hover:text-foreground flex items-center gap-1">
+              <ChevronLeft className="w-4 h-4" />
+              Back to Auctions
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground font-medium">{auction.domain}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Domain Header */}
+            <Card className="bg-card border-border/50">
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <h1 className="text-4xl font-bold font-mono">{auction.domain}</h1>
+                      {auction.verified && <Shield className="w-6 h-6 text-primary" />}
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <Badge className={getStatusColor(auction.status)}>{getStatusText(auction.status)}</Badge>
+                      <Badge variant="secondary" className="text-xs">
+                        {auction.category}
+                      </Badge>
+                      {auction.reserveMet && (
+                        <Badge className="bg-green-500/10 text-green-400 border-green-500/20">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Reserve Met
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed max-w-2xl">{auction.description}</p>
+                  </div>
+
+                  {/* Domain Visual */}
+                  <div className="flex-shrink-0">
+                    <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center border border-primary/10">
+                      <Globe className="w-16 h-16 text-primary" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tabs */}
+            <Tabs defaultValue="bidding" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3 bg-muted/50">
+                <TabsTrigger value="bidding">Bidding History</TabsTrigger>
+                <TabsTrigger value="domain-info">Domain Info</TabsTrigger>
+                <TabsTrigger value="activity">Activity</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="bidding" className="space-y-4">
+                <Card className="bg-card border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <History className="w-5 h-5" />
+                      Bid History ({auction.totalBids} bids)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {auction.bidHistory.map((bid, index) => (
+                      <div
+                        key={bid.id}
+                        className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/50"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-semibold text-primary">
+                              #{auction.bidHistory.length - index}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-mono text-sm">{bid.bidder}</div>
+                            <div className="text-xs text-muted-foreground">{bid.timestamp}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold text-primary">{bid.amount} ETH</div>
+                          <Link
+                            href={`https://etherscan.io/tx/${bid.txHash}`}
+                            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                            target="_blank"
+                          >
+                            View TX <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="domain-info" className="space-y-4">
+                <Card className="bg-card border-border/50">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Globe className="w-5 h-5" />
+                      Domain Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Registration Date</label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span>{auction.domainInfo.registrationDate}</span>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Expiry Date</label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span>{auction.domainInfo.expiryDate}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">Registrar</label>
+                          <div className="mt-1">{auction.domainInfo.registrar}</div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground">WHOIS Info</label>
+                          <div className="mt-1 text-sm">{auction.domainInfo.whoisInfo}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <Separator />
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground mb-2 block">DNS Records</label>
+                      <div className="space-y-2">
+                        {auction.domainInfo.dnsRecords.map((record, index) => (
+                          <div
+                            key={index}
+                            className="font-mono text-sm bg-muted/30 p-2 rounded border border-border/50"
+                          >
+                            {record}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="activity" className="space-y-4">
+                <Card className="bg-card border-border/50">
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <TrendingUp className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>Activity feed coming soon</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Auction Stats */}
+            <Card className="bg-card border-border/50">
+              <CardContent className="p-6">
+                <div className="space-y-6">
+                  {/* Current Bid */}
+                  <div className="text-center">
+                    <div className="text-sm text-muted-foreground mb-1">Current Bid</div>
+                    <div className="text-3xl font-bold text-primary">{auction.currentBid} ETH</div>
+                    <div className="text-sm text-muted-foreground">
+                      ≈ ${(auction.currentBid * 2500).toLocaleString()}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Time Left */}
+                  <div className="text-center">
+                    <div className="text-sm text-muted-foreground mb-2 flex items-center justify-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      Time Remaining
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 text-center">
+                      <div className="bg-muted/30 rounded-lg p-2">
+                        <div className="text-lg font-bold">{timeLeft.days}</div>
+                        <div className="text-xs text-muted-foreground">Days</div>
+                      </div>
+                      <div className="bg-muted/30 rounded-lg p-2">
+                        <div className="text-lg font-bold">{timeLeft.hours}</div>
+                        <div className="text-xs text-muted-foreground">Hours</div>
+                      </div>
+                      <div className="bg-muted/30 rounded-lg p-2">
+                        <div className="text-lg font-bold">{timeLeft.minutes}</div>
+                        <div className="text-xs text-muted-foreground">Min</div>
+                      </div>
+                      <div className="bg-muted/30 rounded-lg p-2">
+                        <div className="text-lg font-bold">{timeLeft.seconds}</div>
+                        <div className="text-xs text-muted-foreground">Sec</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-4 text-center">
+                    <div>
+                      <div className="text-lg font-semibold">{auction.bidders}</div>
+                      <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                        <Users className="w-3 h-3" />
+                        Bidders
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">{auction.totalBids}</div>
+                      <div className="text-xs text-muted-foreground flex items-center justify-center gap-1">
+                        <Gavel className="w-3 h-3" />
+                        Total Bids
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Bidding Interface */}
+                  <div className="space-y-4">
+                    {!isConnected ? (
+                      <div className="text-center space-y-4">
+                        <p className="text-sm text-muted-foreground">Connect your wallet to place bids</p>
+                        <WalletConnectButton className="w-full" />
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                            Your Bid (min: {minBidAmount} ETH)
+                          </label>
+                          <Input
+                            type="number"
+                            placeholder={minBidAmount.toString()}
+                            value={bidAmount}
+                            onChange={(e) => setBidAmount(e.target.value)}
+                            className="bg-background border-border/50"
+                            step="0.1"
+                            min={minBidAmount}
+                          />
+                        </div>
+
+                        {!auction.reserveMet && (
+                          <div className="flex items-center gap-2 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                            <AlertCircle className="w-4 h-4 text-yellow-400" />
+                            <span className="text-sm text-yellow-400">Reserve price: {auction.reservePrice} ETH</span>
+                          </div>
+                        )}
+
+                        {bidError && (
+                          <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>{bidError}</AlertDescription>
+                          </Alert>
+                        )}
+
+                        {bidSuccess && (
+                          <Alert>
+                            <CheckCircle className="h-4 w-4" />
+                            <AlertDescription>{bidSuccess}</AlertDescription>
+                          </Alert>
+                        )}
+
+                        <Button
+                          onClick={handlePlaceBid}
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                          size="lg"
+                          disabled={!bidAmount || Number.parseFloat(bidAmount) < minBidAmount || isPlacingBid}
+                        >
+                          {isPlacingBid ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Placing Bid...
+                            </>
+                          ) : (
+                            "Place Bid"
+                          )}
+                        </Button>
+
+                        <div className="text-xs text-muted-foreground text-center">
+                          By bidding, you agree to our terms and conditions
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reserve Info */}
+            <Card className="bg-card border-border/50">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Starting Bid</span>
+                    <span className="text-sm font-medium">{auction.startingBid} ETH</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Reserve Price</span>
+                    <span className="text-sm font-medium">{auction.reservePrice} ETH</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">Reserve Status</span>
+                    <Badge
+                      className={
+                        auction.reserveMet ? "bg-green-500/10 text-green-400" : "bg-yellow-500/10 text-yellow-400"
+                      }
+                    >
+                      {auction.reserveMet ? "Met" : "Not Met"}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

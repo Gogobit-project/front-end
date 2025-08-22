@@ -1,0 +1,83 @@
+# See https://help.github.com/en/articles/ignoring-files#create-a-gitignore-file
+# for more information on how to write .gitignore files
+
+# dependencies
+node_modules
+
+# build output
+/dist
+
+# local development dependencies
+ yarn-error.log
+ npm-debug.log*
+
+# runtime data
+ pnpm-store/
+
+# editor settings
+*.sublime-project
+*.sublime-workspace
+
+# IDEs
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# misc
+/.cache
+/.DS_Store
+/.git
+/.hg
+/.npmrc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+/npm-debug.log
+/testem.log
+/tmp
+/typings
+
+# next.js
+.next
+.vercel
+.env.*
+.env.local
+.next/*.hot-update.json
+.vercel/*
+
+# vercel
+.vercel
+.env.*
+.env.local
+.vercel/*
+
+# general
+*.log
+*.tmp
+*.temp
+*.pid
+*.seed
+*.pid.lock
+*.log
+*.db
+*.sqlite
+*.db-journal
+*.flow
+*.yarn-integrity
+.prettierignore
+.stylelintignore
+.commitlintrc.json
+.editorconfig
+.eslintignore
+.gitattributes
+.github
+.lighthouserc.json
+.nvmrc
+.prettierrc.json
+.stylelintcache
+.yarnrc
+node_modules/
