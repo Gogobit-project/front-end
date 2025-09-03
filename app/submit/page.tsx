@@ -1,46 +1,39 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { WalletConnectButton } from "@/components/wallet-connect-button"
-import { useWeb3 } from "@/lib/web3-context"
-import {
-  Globe,
-  Shield,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-  Info,
-  DollarSign,
-  Clock,
-  FileText,
-  Gavel,
-  ChevronLeft,
-} from "lucide-react"
-import Link from "next/link"
-
-interface DomainVerification {
-  isValid: boolean
-  isOwned: boolean
-  registrar: string
-  expiryDate: string
-  error?: string
-}
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Combobox } from "@/components/ui/combobox";
+import { WalletConnectButton } from "@/components/wallet-connect-button";
+import { useWeb3 } from "@/lib/web3-context";
+import { Globe, Shield, AlertCircle, CheckCircle, Loader2, Info, DollarSign, Clock, FileText, Gavel, ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import { ethers } from "ethers";
+import { getAuctionContract } from "@/lib/auction-contract";
+import { getUserDomains } from "@/lib/get-user-domain";
+import { set } from "react-hook-form";
+import DomaABI from "../abis/Doma.json";
+import AuctionABI from "../abis/AuctionPool.json";
+import { getDomaContract } from "@/lib/doma-contract";
+import { auctionContract } from "@/lib/auction-contract";
 
 export default function SubmitDomainPage() {
-  const { account, isConnected } = useWeb3()
+  const { account, isConnected } = useWeb3();
+  const [userDomains, setUserDomains] = useState<{ name: string; tokenId: string }[]>([]);
+  const [loadingDomains, setLoadingDomains] = useState(false);
+
   const [formData, setFormData] = useState({
+    tokenId: "",
     domain: "",
     category: "",
     startingBid: "",
@@ -49,105 +42,89 @@ export default function SubmitDomainPage() {
     description: "",
     agreeToTerms: false,
     agreeToFees: false,
-  })
+  });
 
-  const [domainVerification, setDomainVerification] = useState<DomainVerification | null>(null)
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
-  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const submissionFee = 0.05 // ETH
-  const platformFee = 2.5 // percentage
+  const submissionFee = 0.05; // ETH
+  const platformFee = 2.5; // percentage
 
-  const handleDomainChange = (value: string) => {
-    setFormData({ ...formData, domain: value })
-    setDomainVerification(null)
+  async function getSigner() {
+    if (!window.ethereum) throw new Error("No crypto wallet found");
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []); // minta akses akun user
+    return provider.getSigner();
   }
 
-  const verifyDomain = async () => {
-    if (!formData.domain || !isConnected) return
-
-    setIsVerifying(true)
-    setDomainVerification(null)
-
-    try {
-      // Mock domain verification - in real app, this would check ENS ownership
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      const isValidDomain = formData.domain.endsWith(".eth") && formData.domain.length > 4
-      const mockOwnership = Math.random() > 0.3 // 70% chance of ownership
-
-      if (!isValidDomain) {
-        setDomainVerification({
-          isValid: false,
-          isOwned: false,
-          registrar: "",
-          expiryDate: "",
-          error: "Please enter a valid .eth domain",
-        })
-      } else if (!mockOwnership) {
-        setDomainVerification({
-          isValid: true,
-          isOwned: false,
-          registrar: "ENS Domains",
-          expiryDate: "2025-12-31",
-          error: "You don't own this domain or it's not connected to your wallet",
-        })
-      } else {
-        setDomainVerification({
-          isValid: true,
-          isOwned: true,
-          registrar: "ENS Domains",
-          expiryDate: "2025-12-31",
-        })
+  useEffect(() => {
+    if (!account) return;
+    async function load() {
+      setLoadingDomains(true);
+      try {
+        const result = await getUserDomains(account!);
+        setUserDomains(
+          result.map((d: any) => ({
+            name: d.name,
+            tokenId: d.tokens?.[0]?.tokenId,
+          }))
+        );
+      } catch (err) {
+        console.error("Error fetching domains", err);
+      } finally {
+        setLoadingDomains(false);
       }
-    } catch (error) {
-      setDomainVerification({
-        isValid: false,
-        isOwned: false,
-        registrar: "",
-        expiryDate: "",
-        error: "Failed to verify domain ownership",
-      })
-    } finally {
-      setIsVerifying(false)
     }
-  }
+    load();
+  }, [isConnected, account]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!isConnected || !domainVerification?.isOwned) return
-
-    setIsSubmitting(true)
-    setSubmitError(null)
+    e.preventDefault();
+    if (!isConnected || !account) return;
 
     try {
-      // Mock submission process - in real app, this would interact with smart contracts
-      await new Promise((resolve) => setTimeout(resolve, 3000))
+      setIsSubmitting(true);
+      setSubmitError(null);
 
-      // Simulate random success/failure
-      if (Math.random() > 0.1) {
-        setSubmitSuccess(true)
-      } else {
-        setSubmitError("Transaction failed. Please try again.")
-      }
-    } catch (error) {
-      setSubmitError("An unexpected error occurred")
+      // 1️⃣ Ambil provider + signer
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // 2️⃣ Init contracts
+      const doma = getDomaContract(signer);
+      const auction = getAuctionContract(signer);
+
+      const tokenId = BigInt(formData.tokenId); // ambil tokenId dari select
+      console.log("parameter approve", auction.target.toString(), tokenId);
+
+      // 3️⃣ Approve token ke AuctionPool
+      console.log("Approving token", tokenId.toString());
+      const tx1 = await doma.approve(auction.target.toString(), tokenId);
+      await tx1.wait();
+      console.log("✅ Approved", tx1.hash);
+
+      console.log("Submitting domain to auction...");
+      const tx2 = await auction.submitDomain(
+        tokenId
+        //   {
+        //   value: ethers.parseEther(submissionFee.toString()), // kirim fee
+        // }
+      );
+      await tx2.wait();
+      console.log("✅ Domain submitted", tx2.hash);
+
+      setSubmitSuccess(true);
+    } catch (err: any) {
+      console.error("Submit failed:", err);
+      setSubmitError(err.message || "Transaction failed");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const isFormValid =
-    formData.domain &&
-    formData.category &&
-    formData.startingBid &&
-    formData.description &&
-    formData.agreeToTerms &&
-    formData.agreeToFees &&
-    domainVerification?.isOwned
+  const isFormValid = formData.tokenId && formData.category && formData.startingBid && formData.agreeToTerms && formData.agreeToFees;
 
   if (submitSuccess) {
     return (
@@ -184,8 +161,8 @@ export default function SubmitDomainPage() {
           </div>
           <h1 className="text-3xl font-bold mb-4">Submission Successful!</h1>
           <p className="text-muted-foreground mb-8 leading-relaxed">
-            Your domain <span className="font-mono text-primary">{formData.domain}</span> has been submitted for review.
-            Our curation team will review your submission within 24-48 hours.
+            Your domain <span className="font-mono text-primary">{formData.domain}</span> has been submitted for review. Our curation team will review your
+            submission within 24-48 hours.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild>
@@ -197,7 +174,7 @@ export default function SubmitDomainPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -247,8 +224,7 @@ export default function SubmitDomainPage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">Submit Your Domain</h1>
           <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mx-auto">
-            Submit your premium domain for curation and auction on GogoBid. Our expert team reviews each submission to
-            ensure quality and authenticity.
+            Submit your premium domain for curation and auction on GogoBid. Our expert team reviews each submission to ensure quality and authenticity.
           </p>
         </div>
 
@@ -257,9 +233,7 @@ export default function SubmitDomainPage() {
             <CardContent className="p-8 text-center">
               <Globe className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h2 className="text-2xl font-bold mb-2">Connect Your Wallet</h2>
-              <p className="text-muted-foreground mb-6">
-                Connect your wallet to verify domain ownership and submit for auction.
-              </p>
+              <p className="text-muted-foreground mb-6">Connect your wallet to verify domain ownership and submit for auction.</p>
               <WalletConnectButton className="w-full" />
             </CardContent>
           </Card>
@@ -279,58 +253,32 @@ export default function SubmitDomainPage() {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="domain">Domain Name *</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="domain"
-                          placeholder="example.eth"
-                          value={formData.domain}
-                          onChange={(e) => handleDomainChange(e.target.value)}
-                          className="bg-background border-border/50"
-                        />
-                        <Button
-                          type="button"
-                          onClick={verifyDomain}
-                          disabled={!formData.domain || isVerifying}
-                          variant="outline"
-                          className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent"
-                        >
-                          {isVerifying ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Verifying
-                            </>
-                          ) : (
-                            <>
-                              <Shield className="w-4 h-4 mr-2" />
-                              Verify
-                            </>
-                          )}
-                        </Button>
-                      </div>
-
-                      {domainVerification && (
-                        <Alert className={domainVerification.isOwned ? "border-green-500/20" : "border-red-500/20"}>
-                          {domainVerification.isOwned ? (
-                            <CheckCircle className="h-4 w-4 text-green-400" />
-                          ) : (
-                            <AlertCircle className="h-4 w-4 text-red-400" />
-                          )}
-                          <AlertDescription>
-                            {domainVerification.error ||
-                              (domainVerification.isOwned
-                                ? `Domain verified! You own ${formData.domain}`
-                                : "Domain verification failed")}
-                          </AlertDescription>
+                      {loadingDomains ? (
+                        <p className="text-sm text-muted-foreground">Loading domains...</p>
+                      ) : userDomains.length === 0 ? (
+                        <Alert>
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription>No domains found for this wallet</AlertDescription>
                         </Alert>
+                      ) : (
+                        <Select value={formData.tokenId} onValueChange={(val) => setFormData({ ...formData, tokenId: val })}>
+                          <SelectTrigger className="bg-background border-border/50">
+                            <SelectValue placeholder="Select your domain" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {userDomains.map((d) => (
+                              <SelectItem key={d.tokenId} value={String(d.tokenId)}>
+                                {d.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       )}
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="category">Category *</Label>
-                      <Select
-                        value={formData.category}
-                        onValueChange={(value) => setFormData({ ...formData, category: value })}
-                      >
+                      <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                         <SelectTrigger className="bg-background border-border/50">
                           <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
@@ -355,9 +303,7 @@ export default function SubmitDomainPage() {
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         className="bg-background border-border/50 min-h-[120px]"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Minimum 50 characters. Be specific about the domain's value proposition.
-                      </p>
+                      <p className="text-xs text-muted-foreground">Minimum 50 characters. Be specific about the domain's value proposition.</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -402,17 +348,14 @@ export default function SubmitDomainPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="auctionDuration">Auction Duration</Label>
-                      <Select
-                        value={formData.auctionDuration}
-                        onValueChange={(value) => setFormData({ ...formData, auctionDuration: value })}
-                      >
+                      <Select value={formData.auctionDuration} onValueChange={(value) => setFormData({ ...formData, auctionDuration: value })}>
                         <SelectTrigger className="bg-background border-border/50">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="3">3 Days</SelectItem>
-                          <SelectItem value="7">7 Days (Recommended)</SelectItem>
-                          <SelectItem value="14">14 Days</SelectItem>
+                          <SelectItem value="3">1 Days</SelectItem>
+                          <SelectItem value="7">3 Days (Recommended)</SelectItem>
+                          <SelectItem value="14">7 Days</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -420,8 +363,7 @@ export default function SubmitDomainPage() {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription>
-                        Reserve price is the minimum amount you're willing to accept. If not met, the auction will not
-                        complete and the domain remains with you.
+                        Reserve price is the minimum amount you're willing to accept. If not met, the auction will not complete and the domain remains with you.
                       </AlertDescription>
                     </Alert>
                   </CardContent>
@@ -461,8 +403,7 @@ export default function SubmitDomainPage() {
                       />
                       <div className="grid gap-1.5 leading-none">
                         <Label htmlFor="agreeToFees" className="text-sm font-normal cursor-pointer">
-                          I understand and agree to pay the submission fee ({submissionFee} ETH) and platform fee (
-                          {platformFee}% of final sale price).
+                          I understand and agree to pay the submission fee ({submissionFee} ETH) and platform fee ({platformFee}% of final sale price).
                         </Label>
                       </div>
                     </div>
@@ -500,8 +441,7 @@ export default function SubmitDomainPage() {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription className="text-xs">
-                        Submission fee is non-refundable and covers curation costs. Platform fee is only charged on
-                        successful sales.
+                        Submission fee is non-refundable and covers curation costs. Platform fee is only charged on successful sales.
                       </AlertDescription>
                     </Alert>
                   </CardContent>
@@ -573,9 +513,7 @@ export default function SubmitDomainPage() {
                       ) : (
                         <>
                           Submit Domain
-                          <Badge className="ml-2 bg-primary-foreground/20 text-primary-foreground">
-                            {submissionFee} ETH
-                          </Badge>
+                          <Badge className="ml-2 bg-primary-foreground/20 text-primary-foreground">{submissionFee} ETH</Badge>
                         </>
                       )}
                     </Button>
@@ -591,5 +529,5 @@ export default function SubmitDomainPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

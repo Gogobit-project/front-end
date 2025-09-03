@@ -1,34 +1,52 @@
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Clock, TrendingUp, Users, Shield } from "lucide-react"
-import Link from "next/link"
-import { WalletConnectButton } from "@/components/wallet-connect-button"
+export const revalidate = 0; // selalu fetch fresh data
 
-export default function HomePage() {
-  const featuredAuctions = [
-    {
-      domain: "crypto.eth",
-      currentBid: "12.5 ETH",
-      timeLeft: "2d 14h",
-      bidders: 23,
-      verified: true,
-    },
-    {
-      domain: "defi.eth",
-      currentBid: "8.2 ETH",
-      timeLeft: "1d 8h",
-      bidders: 17,
-      verified: true,
-    },
-    {
-      domain: "nft.eth",
-      currentBid: "15.7 ETH",
-      timeLeft: "3d 2h",
-      bidders: 31,
-      verified: true,
-    },
-  ]
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Clock, TrendingUp, Users, Shield } from "lucide-react";
+import Link from "next/link";
+import { WalletConnectButton } from "@/components/wallet-connect-button";
+import { getNames } from "@/lib/get-names";
+import { fetchAuctionData } from "@/lib/fetchAuctionData";
+import { ethers } from "ethers";
+
+// helper untuk format sisa waktu
+function formatTimeLeft(endTime: Date) {
+  const diff = endTime.getTime() - Date.now();
+  if (diff <= 0) return "Expired";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  return `${days}d ${hours}h`;
+}
+
+export default async function HomePage() {
+  const names = await getNames();
+  const featuredAuctions = await Promise.all(
+    names.flatMap(async (nameItem: any) =>
+      Promise.all(
+        nameItem.tokens.map(async (token: any) => {
+          const onchain = await fetchAuctionData(token.tokenId);
+
+          // ✅ Skip auction yang sudah tidak aktif atau sudah lewat endTime
+          if (!onchain.active || onchain.endTime.getTime() <= Date.now()) {
+            return null;
+          }
+
+          return {
+            id: token.tokenId,
+            domain: nameItem.name,
+            verified: nameItem.registrar?.name === "D3 Registrar",
+            currentBid: `${onchain.highestBid} ETH`,
+            timeLeft: formatTimeLeft(onchain.endTime),
+            bidders: onchain.highestBidder !== "0x0000000000000000000000000000000000000000" ? 1 : 0,
+            explorerUrl: token.explorerUrl,
+          };
+        })
+      )
+    )
+  )
+    .then((arr) => arr.flat())
+    .then((list) => list.filter(Boolean)); // hapus null
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,19 +92,14 @@ export default function HomePage() {
           </h1>
 
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Experience premium NFT domain trading in a trusted, community-curated marketplace. Every domain is verified,
-            every auction is transparent.
+            Experience premium NFT domain trading in a trusted, community-curated marketplace. Every domain is verified, every auction is transparent.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
             <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 text-lg">
               <Link href="/auctions">Explore Auctions</Link>
             </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-border text-foreground hover:bg-muted px-8 py-3 text-lg bg-transparent"
-            >
+            <Button variant="outline" size="lg" className="border-border text-foreground hover:bg-muted px-8 py-3 text-lg bg-transparent">
               Learn More
             </Button>
           </div>
@@ -123,10 +136,7 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {featuredAuctions.map((auction, index) => (
-              <Card
-                key={index}
-                className="bg-card border-border/50 hover:border-primary/20 transition-all duration-300 group cursor-pointer"
-              >
+              <Card key={index} className="bg-card border-border/50 hover:border-primary/20 transition-all duration-300 group cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
@@ -170,11 +180,7 @@ export default function HomePage() {
           </div>
 
           <div className="text-center mt-8">
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent"
-            >
+            <Button variant="outline" size="lg" className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent">
               <Link href="/auctions">View All Auctions</Link>
             </Button>
           </div>
@@ -190,9 +196,7 @@ export default function HomePage() {
                 <Shield className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold">Curated Quality</h3>
-              <p className="text-muted-foreground">
-                Every domain is hand-picked and verified by our community of experts
-              </p>
+              <p className="text-muted-foreground">Every domain is hand-picked and verified by our community of experts</p>
             </div>
 
             <div className="space-y-4">
@@ -200,9 +204,7 @@ export default function HomePage() {
                 <TrendingUp className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold">Transparent Bidding</h3>
-              <p className="text-muted-foreground">
-                All bids are on-chain with complete transparency and immutable history
-              </p>
+              <p className="text-muted-foreground">All bids are on-chain with complete transparency and immutable history</p>
             </div>
 
             <div className="space-y-4">
@@ -210,13 +212,11 @@ export default function HomePage() {
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-semibold">Trusted Community</h3>
-              <p className="text-muted-foreground">
-                Join experienced domainers and Web3 enthusiasts in premium auctions
-              </p>
+              <p className="text-muted-foreground">Join experienced domainers and Web3 enthusiasts in premium auctions</p>
             </div>
           </div>
         </div>
       </section>
     </div>
-  )
+  );
 }
