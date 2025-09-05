@@ -4,9 +4,7 @@ import { getNames } from "@/lib/get-names";
 import { fetchAuctionData } from "@/lib/fetchAuctionData";
 import HomeAnimated from "@/components/home-animated";
 
-
-function formatTimeLeft(endTime: Date) {
-
+export function formatTimeLeft(endTime: Date) {
   const diff = endTime.getTime() - Date.now();
   if (diff <= 0) return "Expired";
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -34,7 +32,9 @@ export default async function HomePage() {
         })
       )
     )
-  ).then((arr) => arr.flat()).then((list) => list.filter(Boolean));
+  )
+    .then((arr) => arr.flat())
+    .then((list) => list.filter(Boolean));
 
   return <HomeAnimated featuredAuctions={featuredAuctions as any[]} />;
 }
