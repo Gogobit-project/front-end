@@ -11,7 +11,7 @@ import { fetchAuctionData } from "@/lib/fetchAuctionData";
 import { ethers } from "ethers";
 
 // helper untuk format sisa waktu
-function formatTimeLeft(endTime: Date) {
+export function formatTimeLeft(endTime: Date) {
   const diff = endTime.getTime() - Date.now();
   if (diff <= 0) return "Expired";
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
