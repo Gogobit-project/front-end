@@ -1,13 +1,16 @@
 "use client";
 
+
 import { useState } from "react";
 import Link from "next/link";
+
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import {
   Table,
   TableBody,
@@ -16,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,8 +46,10 @@ import {
   Eye,
   Edit,
   Trash2,
+
 } from "lucide-react";
 import Starfield from "@/components/starfield";
+
 
 // ---------------- Types ----------------
 interface UserBid {
@@ -51,10 +57,10 @@ interface UserBid {
   domain: string;
   currentBid: number;
   myBid: number;
+
   status: "winning" | "outbid" | "won" | "lost";
-  timeLeft: string;
-  auctionId: string;
-}
+
+
 
 interface UserSubmission {
   id: string;
@@ -86,6 +92,7 @@ export default function DashboardPage() {
     portfolioValue: 78.3,
   };
 
+
   const userBids: UserBid[] = [
     {
       id: "1",
@@ -115,6 +122,8 @@ export default function DashboardPage() {
       auctionId: "3",
     },
   ];
+
+
 
   const userSubmissions: UserSubmission[] = [
     {
@@ -170,7 +179,7 @@ export default function DashboardPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "winning":
+      case "highest bid":
       case "won":
       case "approved":
       case "live":
@@ -185,12 +194,16 @@ export default function DashboardPage() {
       case "listed":
         return "bg-blue-500/10 text-blue-400 border-blue-500/20";
       default:
+
         return "bg-white/10 text-white/80 border-white/20";
+
     }
   };
 
   const copyAddress = () => {
+
     if (account) navigator.clipboard.writeText(account);
+
   };
 
   // ------------- Guard -------------
@@ -221,6 +234,7 @@ export default function DashboardPage() {
               auctions.
             </p>
             <WalletConnectButton className="w-full border border-indigo-300/40 text-indigo-200 hover:bg-indigo-400/10" />
+
           </CardContent>
         </Card>
       </div>
@@ -229,6 +243,7 @@ export default function DashboardPage() {
 
   // ------------- Main -------------
   return (
+
     <div
       className="relative min-h-screen text-white overflow-hidden"
       style={{
@@ -258,6 +273,7 @@ export default function DashboardPage() {
                   width={18}
                   height={18}
                 />
+
               </div>
               <span className="text-[20px] font-semibold tracking-wide text-white">
                 Gogo<span className="text-indigo-300">Bid</span>
@@ -280,6 +296,7 @@ export default function DashboardPage() {
               >
                 Submit Domain
               </Link>
+
             </div>
 
             <DropdownMenu>
@@ -331,16 +348,30 @@ export default function DashboardPage() {
               <AvatarImage src="/generic-user-avatar.png" />
               <AvatarFallback>U</AvatarFallback>
             </Avatar>
+
             <div>
-              <div className="font-medium">
-                {account?.slice(0, 6)}...{account?.slice(-4)}
+              <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+              <p className="text-muted-foreground">Manage your bids, submissions, and collection</p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Avatar className="w-12 h-12">
+                <AvatarImage src="/generic-user-avatar.png" />
+                <AvatarFallback>U</AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="font-medium">
+                  {account?.slice(0, 6)}...{account?.slice(-4)}
+                </div>
+                <div className="text-sm text-muted-foreground">{balance} ETH • Connected</div>
               </div>
+
               <div className="text-sm text-slate-300/75">
                 {balance} ETH • Connected
               </div>
+
             </div>
           </div>
-        </div>
+
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -496,9 +527,10 @@ export default function DashboardPage() {
                     ))}
                   </TableBody>
                 </Table>
+
               </CardContent>
             </Card>
-          </TabsContent>
+
 
           {/* SUBMISSIONS */}
           <TabsContent value="submissions" className="space-y-4">
@@ -585,9 +617,10 @@ export default function DashboardPage() {
                     ))}
                   </TableBody>
                 </Table>
+
               </CardContent>
             </Card>
-          </TabsContent>
+
 
           {/* COLLECTION */}
           <TabsContent value="collection" className="space-y-4">
@@ -649,8 +682,12 @@ export default function DashboardPage() {
                             <Badge className={getStatusColor(item.status)}>
                               {item.status.charAt(0).toUpperCase() +
                                 item.status.slice(1)}
+
                             </Badge>
                           </TableCell>
+                          <TableCell>{submission.submittedDate}</TableCell>
+                          <TableCell className="font-semibold">{submission.startingBid} ETH</TableCell>
+                          <TableCell className="font-semibold text-primary">{submission.currentBid ? `${submission.currentBid} ETH` : "-"}</TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -661,22 +698,33 @@ export default function DashboardPage() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem>
                                   <Eye className="mr-2 h-4 w-4" />
-                                  View Domain
+                                  View Details
                                 </DropdownMenuItem>
-                                {item.status === "owned" && (
-                                  <DropdownMenuItem>
-                                    <Gavel className="mr-2 h-4 w-4" />
-                                    List for Auction
+                                {submission.status === "pending" && (
+                                  <>
+                                    <DropdownMenuItem>
+                                      <Edit className="mr-2 h-4 w-4" />
+                                      Edit Submission
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-600">
+                                      <Trash2 className="mr-2 h-4 w-4" />
+                                      Cancel Submission
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                {submission.status === "live" && (
+                                  <DropdownMenuItem asChild>
+                                    <Link href={`/auctions/${submission.id}`}>
+                                      <ExternalLink className="mr-2 h-4 w-4" />
+                                      View Auction
+                                    </Link>
                                   </DropdownMenuItem>
                                 )}
-                                <DropdownMenuItem>
-                                  <ExternalLink className="mr-2 h-4 w-4" />
-                                  View on ENS
-                                </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>
+
                       );
                     })}
                   </TableBody>
@@ -687,5 +735,6 @@ export default function DashboardPage() {
         </Tabs>
       </div>
     </div>
+
   );
 }
