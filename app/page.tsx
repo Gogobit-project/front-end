@@ -65,14 +65,13 @@ export default async function HomePage() {
                 Auctions
               </Link>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                How it Works
+                Vote
               </a>
               <Link href="/submit" className="text-muted-foreground hover:text-foreground transition-colors">
                 Submit Domain
               </Link>
             </div>
             <WalletConnectButton className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent" />
-            
           </div>
         </div>
       </nav>

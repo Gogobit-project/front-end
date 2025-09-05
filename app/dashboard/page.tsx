@@ -219,7 +219,7 @@ export default function DashboardPage() {
                 Auctions
               </Link>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                How it Works
+                Vote
               </a>
               <Link href="/submit" className="text-muted-foreground hover:text-foreground transition-colors">
                 Submit Domain
