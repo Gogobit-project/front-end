@@ -185,7 +185,7 @@ export default function DashboardPage() {
       const contract = await getAuctionContractWithSigner();
       const tx = await contract.endAuction(tokenId);
       const receipt = await tx.wait();
-      setClaimStatus({ success: `Domain claimed successfully! Tx: ${receipt.transactionHash.slice(0, 10)}...` });
+      setClaimStatus({ success: `Domain claimed successfully! ` });
       await fetchAndSetUserBids(); // refresh list
     } catch (err: any) {
       console.error("Failed to claim domain:", err);
