@@ -72,6 +72,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <WalletConnectButton className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent" />
+            
           </div>
         </div>
       </nav>

@@ -221,7 +221,7 @@ export default function AuctionDetailPage({ tokenId }: { tokenId: string }) {
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-lg">G</span>
+                     <img src={"/gogobit.png"} className="text-primary-foreground font-bold text-lg"></img>
               </div>
               <span className="text-xl font-bold text-foreground">GogoBid</span>
             </Link>
