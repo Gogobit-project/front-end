@@ -353,67 +353,65 @@ export default function DashboardPage() {
     (
       <div className="min-h-screen bg-background">
         {/* Navigation */}
+        {/* Navigation */}
         <nav className="border-b border-border/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto px-6 py-4">
-            <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <img src={"/gogobit.png"} className="text-primary-foreground font-bold text-lg"></img>
+            <div className="flex items-center">
+              {/* BAGIAN KIRI: Logo */}
+              <div className="flex-1">
+                <Link href="/" className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                    {/* Pastikan tag img sudah self-closing dengan '/>' */}
+                    <img src={"/gogobit.png"} className="text-primary-foreground font-bold text-lg" />
+                  </div>
+                  <span className="text-xl font-bold text-foreground">GogoBid</span>
+                </Link>
               </div>
-              <span className="text-xl font-bold text-foreground">GogoBid</span>
-            </Link>
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/auctions" className="text-muted-foreground hover:text-foreground transition-colors">
-                Auctions
-              </Link>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                Vote
-              </a>
-              <Link href="/submit" className="text-muted-foreground hover:text-foreground transition-colors">
-                Submit Domain
-              </Link>
+
+              {/* BAGIAN TENGAH: Link Navigasi */}
               <div className="hidden md:flex items-center space-x-8">
                 <Link href="/auctions" className="text-muted-foreground hover:text-foreground transition-colors">
                   Auctions
                 </Link>
                 <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                  How it Works
+                  Vote
                 </a>
                 <Link href="/submit" className="text-muted-foreground hover:text-foreground transition-colors">
                   Submit Domain
                 </Link>
-                {/* <Link href="/dashboard" className="text-primary font-medium">
-                Dashboard
-              </Link> */}
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent">
-                    <Avatar className="w-6 h-6 mr-2">
-                      <AvatarImage src="/generic-user-avatar.png" />
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                    {account?.slice(0, 6)}...{account?.slice(-4)}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={copyAddress}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy Address
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={disconnect}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Disconnect
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+
+              {/* BAGIAN KANAN: Menu Profil */}
+              <div className="flex-1 flex justify-end">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent">
+                      <Avatar className="w-6 h-6 mr-2">
+                        <AvatarImage src="/generic-user-avatar.png" />
+                        <AvatarFallback>U</AvatarFallback>
+                      </Avatar>
+                      {account?.slice(0, 6)}...{account?.slice(-4)}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={copyAddress}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy Address
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={disconnect}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Disconnect
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </nav>
