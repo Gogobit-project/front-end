@@ -195,7 +195,7 @@ export default function SubmitDomainPage() {
                 Auctions
               </Link>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                How it Works
+                Vote
               </a>
               <Link href="/submit" className="text-primary font-medium">
                 Submit Domain

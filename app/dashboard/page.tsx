@@ -359,8 +359,18 @@ export default function DashboardPage() {
               <Link href="/" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <img src={"/gogobit.png"} className="text-primary-foreground font-bold text-lg"></img>
-                </div>
-                <span className="text-xl font-bold text-foreground">GogoBid</span>
+              </div>
+              <span className="text-xl font-bold text-foreground">GogoBid</span>
+            </Link>
+            <div className="hidden md:flex items-center space-x-8">
+              <Link href="/auctions" className="text-muted-foreground hover:text-foreground transition-colors">
+                Auctions
+              </Link>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                Vote
+              </a>
+              <Link href="/submit" className="text-muted-foreground hover:text-foreground transition-colors">
+                Submit Domain
               </Link>
               <div className="hidden md:flex items-center space-x-8">
                 <Link href="/auctions" className="text-muted-foreground hover:text-foreground transition-colors">
