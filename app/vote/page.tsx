@@ -7,6 +7,7 @@ import { useWeb3 } from "@/lib/web3-context";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Flame } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,7 +20,9 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import Starfield from "@/components/starfield";
-
+import { getNames } from "@/lib/get-names";
+import { fetchAuctionData } from "@/lib/fetchAuctionData";
+import { getBidderCount } from "@/lib/get-bidder-count";
 import {
   ArrowUpCircle,
   Search,
@@ -27,6 +30,11 @@ import {
   Shield,
   CheckCircle2,
 } from "lucide-react";
+import { getSubmittedDomains } from "@/lib/get-domain-submitted";
+import { getNameMap } from "@/lib/get-name-map";
+import { getAuctionStarted } from "@/lib/get-auction-started";
+import { useApproveAndStartAuction } from "./handleSubmit";
+// import { handleSubmit, useApproveAndStartAuction } from "./handleSubmit";
 
 // --------- MOCK DATA (replace with real fetch) ----------
 type DomainItem = {
@@ -36,87 +44,140 @@ type DomainItem = {
   verified?: boolean;
   votes: number;
 };
-async function fetchDomains(): Promise<DomainItem[]> {
-  return [
-    { id: "1", name: "alpha.doma", category: "Tech", verified: true, votes: 12 },
-    { id: "2", name: "nexus.doma", category: "Finance", votes: 7 },
-    { id: "3", name: "playzone.doma", category: "Gaming", votes: 20 },
-    { id: "4", name: "gallery.doma", category: "Art", votes: 5 },
-  ];
-}
-const votedKey = (account?: string | null) => `votedDomains:${account ?? "guest"}`;
+
 
 export default function VotePage() {
   const { account, isConnected, connect } = useWeb3();
   const { toast } = useToast();
 
   const [domains, setDomains] = useState<DomainItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"most" | "least" | "az">("most");
   const [voted, setVoted] = useState<Record<string, boolean>>({});
 
-  // initial load
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const data = await fetchDomains();
-      setDomains(data);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("ending-soon");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [priceRange, setPriceRange] = useState("all");
+  const [auctions, setAuctions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { submit, tx } = useApproveAndStartAuction()
+
+
+  type SubmittedVM = {
+  tokenId: string;
+  seller: string;
+  name: string; // kosongkan saja "" kalau null
+};
+
+const [submitted, setSubmitted] = useState<SubmittedVM[]>([]);
+
+useEffect(() => {
+  async function load() {
+    setLoading(true);
+    try {
+      // 1) Ambil semua submitted events (punyamu sendiri)
+      const events = await getSubmittedDomains(); // [{ tokenId, seller }, ...]
+      const tokenIds = events.map((e) => String(e.tokenId));
+
+      // 2) Ambil name untuk masing-masing tokenId
+      const namesMap = await getNameMap(tokenIds); // Map<string, string>
+
+      // 3) Ambil event AuctionStarted untuk tokenIds tsb
+      const eventsByToken = await getAuctionStarted(tokenIds, 0, "latest");
+      // bentuk: { "123": [ {..row..}, ... ], "456": [], ... }
+
+      // 4) Buat set token yang SUDAH punya AuctionStarted
+      const startedSet = new Set(
+        Object.keys(eventsByToken).filter((id) => (eventsByToken[id]?.length ?? 0) > 0)
+      );
+
+      // 5) Bangun view: hanya token yang TIDAK ada di startedSet
+      const view: SubmittedVM[] = events
+        .filter((e) => !startedSet.has(String(e.tokenId)))
+        .map((e) => ({
+          tokenId: String(e.tokenId),
+          seller: String(e.seller),
+          name: namesMap.get(String(e.tokenId)) ?? "",
+        }));
+
+      setSubmitted(view);
+    } catch (err) {
+      console.error("Failed load submitted domains", err);
+    } finally {
       setLoading(false);
-    })();
-  }, []);
-
-  // load voted map for current account
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(votedKey(account));
-      setVoted(raw ? JSON.parse(raw) : {});
-    } catch {
-      setVoted({});
     }
-  }, [account]);
+  }
+  load();
+}, []);
 
-  // persist voted
-  useEffect(() => {
-    try {
-      localStorage.setItem(votedKey(account), JSON.stringify(voted));
-    } catch {}
-  }, [voted, account]);
+
+
+
+
+  // Filter & sort
+  const filteredAndSortedAuctions = useMemo(() => {
+    const filtered = auctions.filter((a) => {
+      if (
+        searchQuery &&
+        !a.domain.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+        return false;
+      if (filterCategory !== "all" && a.category !== filterCategory)
+        return false;
+      if (filterStatus !== "all" && a.status !== filterStatus) return false;
+
+      if (priceRange !== "all") {
+        const b = a.currentBid;
+        if (priceRange === "under-5") return b < 5;
+        if (priceRange === "5-15") return b >= 5 && b <= 15;
+        if (priceRange === "15-30") return b >= 15 && b <= 30;
+        if (priceRange === "over-30") return b > 30;
+      }
+      return true;
+    });
+
+    switch (sortBy) {
+      case "ending-soon":
+        return filtered.sort((a, b) => a.timeLeftHours - b.timeLeftHours);
+      case "highest-bid":
+        return filtered.sort((a, b) => b.currentBid - a.currentBid);
+      case "lowest-bid":
+        return filtered.sort((a, b) => a.currentBid - b.currentBid);
+      case "most-bidders":
+        return filtered.sort((a, b) => b.bidders - a.bidders);
+      case "newest":
+        return filtered.sort((a, b) => b.timeLeftHours - a.timeLeftHours);
+      default:
+        return filtered;
+    }
+  }, [searchQuery, sortBy, filterCategory, filterStatus, priceRange, auctions]);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "ending-soon":
+        return "bg-red-500/20 text-red-400 border-red-500/30";
+      case "new":
+        return "bg-blue-500/20 text-blue-400 border-blue-500/30";
+      default:
+        return "bg-indigo-400/15 text-indigo-300 border-indigo-300/30";
+    }
+  };
+
+
 
   const filtered = useMemo(() => {
-    const s = search.trim().toLowerCase();
-    let arr = domains.filter((d) => (s ? d.name.toLowerCase().includes(s) : true));
+    const s = searchQuery.trim().toLowerCase();
+    let arr = domains.filter((d) =>
+      s ? d.name.toLowerCase().includes(s) : true
+    );
     if (sortBy === "most") arr = arr.sort((a, b) => b.votes - a.votes);
     if (sortBy === "least") arr = arr.sort((a, b) => a.votes - b.votes);
     if (sortBy === "az") arr = arr.sort((a, b) => a.name.localeCompare(b.name));
     return arr;
-  }, [domains, search, sortBy]);
+  }, [domains, searchQuery, sortBy]);
 
-  const handleVote = async (domain: DomainItem) => {
-    if (!isConnected || !account) {
-      toast({
-        title: "Wallet belum terhubung",
-        description: "Hubungkan wallet untuk melakukan vote.",
-        action: <ToastAction altText="Connect" onClick={connect}>Connect</ToastAction>,
-      });
-      return;
-    }
-    if (voted[domain.id]) return;
-
-    // TODO: call your API/contract here
-    setDomains((prev) => prev.map((d) => (d.id === domain.id ? { ...d, votes: d.votes + 1 } : d)));
-    setVoted((prev) => ({ ...prev, [domain.id]: true }));
-
-    toast({
-      description: (
-        <div className="flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-          <span>{domain.name} menerima suaramu.</span>
-        </div>
-      ),
-    });
-  };
+ 
 
   return (
     <div
@@ -129,33 +190,35 @@ export default function VotePage() {
         `,
       }}
     >
-         <Starfield
-             density={0.0014}
-             baseSpeed={0.06}
-             maxParallax={14}
-             className="z-0"
-           />
+      <Starfield
+        density={0.0014}
+        baseSpeed={0.06}
+        maxParallax={14}
+        className="z-0"
+      />
 
       {/* NAV */}
       <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-             <Link href="/" className="flex items-center gap-2">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
-                <img
-                  src="/gogobit.png"
-                  alt="GogoBid"
-                  width={18}
-                  height={18}
-                />
-              </div>
-              <span className="text-[20px] font-semibold tracking-wide text-white">
-                Gogo<span className="text-indigo-300">Bid</span>
-              </span>
-            </Link>
+          <Link href="/" className="flex items-center gap-2">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
+              <img src="/gogobit.png" alt="GogoBid" width={18} height={18} />
+            </div>
+            <span className="text-[20px] font-semibold tracking-wide text-white">
+              Gogo<span className="text-indigo-300">Bid</span>
+            </span>
+          </Link>
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/auctions" className="text-slate-300/70 hover:text-white">Auctions</Link>
+            <Link
+              href="/auctions"
+              className="text-slate-300/70 hover:text-white"
+            >
+              Auctions
+            </Link>
             <span className="text-indigo-300 font-medium">Vote</span>
-            <Link href="/submit" className="text-slate-300/70 hover:text-white">Submit Domain</Link>
+            <Link href="/submit" className="text-slate-300/70 hover:text-white">
+              Submit Domain
+            </Link>
           </div>
           <WalletConnectButton className="border border-indigo-300/40 text-indigo-200 hover:bg-indigo-400/10" />
         </div>
@@ -166,7 +229,9 @@ export default function VotePage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <h1 className="text-4xl font-bold mb-2">Community Vote</h1>
-            <p className="text-slate-300/85">Pilih domain favoritmu — satu suara per domain per akun.</p>
+            <p className="text-slate-300/85">
+              Select and support your favorite domain
+            </p>
           </div>
 
           <div className="flex gap-3 w-full md:w-auto">
@@ -174,8 +239,8 @@ export default function VotePage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
               <Input
                 placeholder="Search domains..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-black/30 border-white/10 text-white placeholder:text-slate-500"
               />
             </div>
@@ -199,57 +264,35 @@ export default function VotePage() {
       <section className="py-8 px-6">
         <div className="max-w-7xl mx-auto">
           {loading ? (
-            <div className="text-center py-20 text-slate-400">Loading domains…</div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-slate-400">No domains found.</div>
+            <div className="text-center py-20 text-slate-400">
+              Loading submitted domains…
+            </div>
+          ) : submitted.length === 0 ? (
+            <div className="text-center py-20 text-slate-400">
+              No submitted domains.
+            </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filtered.map((d) => {
-                const isVoted = !!voted[d.id];
-                return (
-                  <Card
-                    key={d.id}
-                    className="bg-white/[0.05] border border-white/10 backdrop-blur-sm hover:border-indigo-300/30 transition relative overflow-hidden"
-                  >
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-gradient-to-tr from-indigo-400/10 via-transparent to-violet-400/10" />
-                    <CardHeader className="pb-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-lg font-semibold">{d.name}</span>
-                          {d.verified && <Shield className="w-4 h-4 text-indigo-300" />}
-                        </div>
-                        <Badge variant="secondary" className="bg-white/10 text-slate-200 border-white/15">
-                          {d.category}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="text-sm text-slate-300/80">Total Votes</div>
-                        <div className="text-base font-semibold">{d.votes}</div>
-                      </div>
+              {submitted.map((s) => (
+                <Card
+                  key={s.tokenId}
+                  className="group bg-white/[0.05] border border-white/10 backdrop-blur-sm hover:border-indigo-300/40 transition"
+                >
+                  <CardHeader>
+                    <span className="font-mono text-lg font-semibold">
+                      {s.name ? s.name : `Token #${s.tokenId.slice(0, 6)}...`}
+                    </span>
 
-                      <Button
-                        className="w-full rounded-xl bg-indigo-400/15 text-indigo-200 border border-indigo-300/30 hover:bg-indigo-500 hover:text-white hover:border-indigo-400 transition disabled:opacity-60"
-                        onClick={() => handleVote(d)}
-                        disabled={isVoted}
-                      >
-                        {isVoted ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Voted
-                          </>
-                        ) : (
-                          <>
-                            <ArrowUpCircle className="w-4 h-4 mr-2" />
-                            Upvote
-                          </>
-                        )}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    {/* kalau mau tampilkan seller */}
+                    <div className="text-xs text-slate-400 mt-1">
+                      Seller: {s.seller.slice(0, 6)}...{s.seller.slice(-4)}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <button onClick={()=> submit(s.tokenId)} className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 text-white/90 backdrop-blur transition-colors duration-200 hover:bg-[#0b1d3a] hover:text-white hover:border-indigo-400/40 group-hover:bg-[#0b1d3a] group-hover:text-white group-hover:border-indigo-400/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/30" > <Flame className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" /> Up Vote </button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </div>
