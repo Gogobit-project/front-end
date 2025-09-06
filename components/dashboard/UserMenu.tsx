@@ -12,6 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Copy, LogOut, Settings } from "lucide-react";
 import { copyToClipboard } from "@/lib/utils"; // Menggunakan utilitas yang sudah dibuat
+import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 
 interface UserMenuProps {
   account: string | null;
@@ -47,6 +49,12 @@ export function UserMenu({ account, disconnect }: UserMenuProps) {
         <DropdownMenuItem>
           <Settings className="mr-2 h-4 w-4" />
           Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/dashboard" className="flex items-center">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            <span>Dashboard</span>
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={disconnect}>

@@ -10,26 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Flame } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import Starfield from "@/components/starfield";
+import { Navbar } from "@/components/navbar";
 import { getNames } from "@/lib/get-names";
 import { fetchAuctionData } from "@/lib/fetchAuctionData";
 import { getBidderCount } from "@/lib/get-bidder-count";
-import {
-  ArrowUpCircle,
-  Search,
-  SlidersHorizontal,
-  Shield,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowUpCircle, Search, SlidersHorizontal, Shield, CheckCircle2 } from "lucide-react";
 import { getSubmittedDomains } from "@/lib/get-domain-submitted";
 import { getNameMap } from "@/lib/get-name-map";
 import { getAuctionStarted } from "@/lib/get-auction-started";
@@ -44,7 +33,6 @@ type DomainItem = {
   verified?: boolean;
   votes: number;
 };
-
 
 export default function VotePage() {
   const { account, isConnected, connect } = useWeb3();
@@ -61,70 +49,58 @@ export default function VotePage() {
   const [priceRange, setPriceRange] = useState("all");
   const [auctions, setAuctions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { submit, tx } = useApproveAndStartAuction()
-
+  const { submit, tx } = useApproveAndStartAuction();
 
   type SubmittedVM = {
-  tokenId: string;
-  seller: string;
-  name: string; // kosongkan saja "" kalau null
-};
+    tokenId: string;
+    seller: string;
+    name: string; // kosongkan saja "" kalau null
+  };
 
-const [submitted, setSubmitted] = useState<SubmittedVM[]>([]);
+  const [submitted, setSubmitted] = useState<SubmittedVM[]>([]);
 
-useEffect(() => {
-  async function load() {
-    setLoading(true);
-    try {
-      // 1) Ambil semua submitted events (punyamu sendiri)
-      const events = await getSubmittedDomains(); // [{ tokenId, seller }, ...]
-      const tokenIds = events.map((e) => String(e.tokenId));
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        // 1) Ambil semua submitted events (punyamu sendiri)
+        const events = await getSubmittedDomains(); // [{ tokenId, seller }, ...]
+        const tokenIds = events.map((e) => String(e.tokenId));
 
-      // 2) Ambil name untuk masing-masing tokenId
-      const namesMap = await getNameMap(tokenIds); // Map<string, string>
+        // 2) Ambil name untuk masing-masing tokenId
+        const namesMap = await getNameMap(tokenIds); // Map<string, string>
 
-      // 3) Ambil event AuctionStarted untuk tokenIds tsb
-      const eventsByToken = await getAuctionStarted(tokenIds, 0, "latest");
-      // bentuk: { "123": [ {..row..}, ... ], "456": [], ... }
+        // 3) Ambil event AuctionStarted untuk tokenIds tsb
+        const eventsByToken = await getAuctionStarted(tokenIds, 0, "latest");
+        // bentuk: { "123": [ {..row..}, ... ], "456": [], ... }
 
-      // 4) Buat set token yang SUDAH punya AuctionStarted
-      const startedSet = new Set(
-        Object.keys(eventsByToken).filter((id) => (eventsByToken[id]?.length ?? 0) > 0)
-      );
+        // 4) Buat set token yang SUDAH punya AuctionStarted
+        const startedSet = new Set(Object.keys(eventsByToken).filter((id) => (eventsByToken[id]?.length ?? 0) > 0));
 
-      // 5) Bangun view: hanya token yang TIDAK ada di startedSet
-      const view: SubmittedVM[] = events
-        .filter((e) => !startedSet.has(String(e.tokenId)))
-        .map((e) => ({
-          tokenId: String(e.tokenId),
-          seller: String(e.seller),
-          name: namesMap.get(String(e.tokenId)) ?? "",
-        }));
+        // 5) Bangun view: hanya token yang TIDAK ada di startedSet
+        const view: SubmittedVM[] = events
+          .filter((e) => !startedSet.has(String(e.tokenId)))
+          .map((e) => ({
+            tokenId: String(e.tokenId),
+            seller: String(e.seller),
+            name: namesMap.get(String(e.tokenId)) ?? "",
+          }));
 
-      setSubmitted(view);
-    } catch (err) {
-      console.error("Failed load submitted domains", err);
-    } finally {
-      setLoading(false);
+        setSubmitted(view);
+      } catch (err) {
+        console.error("Failed load submitted domains", err);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-  load();
-}, []);
-
-
-
-
+    load();
+  }, []);
 
   // Filter & sort
   const filteredAndSortedAuctions = useMemo(() => {
     const filtered = auctions.filter((a) => {
-      if (
-        searchQuery &&
-        !a.domain.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-        return false;
-      if (filterCategory !== "all" && a.category !== filterCategory)
-        return false;
+      if (searchQuery && !a.domain.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (filterCategory !== "all" && a.category !== filterCategory) return false;
       if (filterStatus !== "all" && a.status !== filterStatus) return false;
 
       if (priceRange !== "all") {
@@ -164,20 +140,43 @@ useEffect(() => {
     }
   };
 
-
-
   const filtered = useMemo(() => {
     const s = searchQuery.trim().toLowerCase();
-    let arr = domains.filter((d) =>
-      s ? d.name.toLowerCase().includes(s) : true
-    );
+    let arr = domains.filter((d) => (s ? d.name.toLowerCase().includes(s) : true));
     if (sortBy === "most") arr = arr.sort((a, b) => b.votes - a.votes);
     if (sortBy === "least") arr = arr.sort((a, b) => a.votes - b.votes);
     if (sortBy === "az") arr = arr.sort((a, b) => a.name.localeCompare(b.name));
     return arr;
   }, [domains, searchQuery, sortBy]);
 
- 
+  const handleVote = async (domain: DomainItem) => {
+    if (!isConnected || !account) {
+      toast({
+        title: "Wallet belum terhubung",
+        description: "Hubungkan wallet untuk melakukan vote.",
+        action: (
+          <ToastAction altText="Connect" onClick={connect}>
+            Connect
+          </ToastAction>
+        ),
+      });
+      return;
+    }
+    if (voted[domain.id]) return;
+
+    // TODO: call your API/contract here
+    setDomains((prev) => prev.map((d) => (d.id === domain.id ? { ...d, votes: d.votes + 1 } : d)));
+    setVoted((prev) => ({ ...prev, [domain.id]: true }));
+
+    toast({
+      description: (
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
+          <span>{domain.name} menerima suaramu.</span>
+        </div>
+      ),
+    });
+  };
 
   return (
     <div
@@ -190,48 +189,17 @@ useEffect(() => {
         `,
       }}
     >
-      <Starfield
-        density={0.0014}
-        baseSpeed={0.06}
-        maxParallax={14}
-        className="z-0"
-      />
+      <Starfield density={0.0014} baseSpeed={0.06} maxParallax={14} className="z-0" />
 
       {/* NAV */}
-      <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
-              <img src="/gogobit.png" alt="GogoBid" width={18} height={18} />
-            </div>
-            <span className="text-[20px] font-semibold tracking-wide text-white">
-              Gogo<span className="text-indigo-300">Bid</span>
-            </span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/auctions"
-              className="text-slate-300/70 hover:text-white"
-            >
-              Auctions
-            </Link>
-            <span className="text-indigo-300 font-medium">Vote</span>
-            <Link href="/submit" className="text-slate-300/70 hover:text-white">
-              Submit Domain
-            </Link>
-          </div>
-          <WalletConnectButton className="border border-indigo-300/40 text-indigo-200 hover:bg-indigo-400/10" />
-        </div>
-      </nav>
+      <Navbar />
 
       {/* HEADER */}
       <section className="py-12 px-6 border-b border-white/10 bg-white/[0.02]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
             <h1 className="text-4xl font-bold mb-2">Community Vote</h1>
-            <p className="text-slate-300/85">
-              Select and support your favorite domain
-            </p>
+            <p className="text-slate-300/85">Select and support your favorite domain</p>
           </div>
 
           <div className="flex gap-3 w-full md:w-auto">
@@ -264,24 +232,15 @@ useEffect(() => {
       <section className="py-8 px-6">
         <div className="max-w-7xl mx-auto">
           {loading ? (
-            <div className="text-center py-20 text-slate-400">
-              Loading submitted domains…
-            </div>
+            <div className="text-center py-20 text-slate-400">Loading submitted domains…</div>
           ) : submitted.length === 0 ? (
-            <div className="text-center py-20 text-slate-400">
-              No submitted domains.
-            </div>
+            <div className="text-center py-20 text-slate-400">No submitted domains.</div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {submitted.map((s) => (
-                <Card
-                  key={s.tokenId}
-                  className="group bg-white/[0.05] border border-white/10 backdrop-blur-sm hover:border-indigo-300/40 transition"
-                >
+                <Card key={s.tokenId} className="group bg-white/[0.05] border border-white/10 backdrop-blur-sm hover:border-indigo-300/40 transition">
                   <CardHeader>
-                    <span className="font-mono text-lg font-semibold">
-                      {s.name ? s.name : `Token #${s.tokenId.slice(0, 6)}...`}
-                    </span>
+                    <span className="font-mono text-lg font-semibold">{s.name ? s.name : `Token #${s.tokenId.slice(0, 6)}...`}</span>
 
                     {/* kalau mau tampilkan seller */}
                     <div className="text-xs text-slate-400 mt-1">
@@ -289,7 +248,13 @@ useEffect(() => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <button onClick={()=> submit(s.tokenId)} className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 text-white/90 backdrop-blur transition-colors duration-200 hover:bg-[#0b1d3a] hover:text-white hover:border-indigo-400/40 group-hover:bg-[#0b1d3a] group-hover:text-white group-hover:border-indigo-400/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/30" > <Flame className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" /> Up Vote </button>
+                    <button
+                      onClick={() => submit(s.tokenId)}
+                      className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 text-white/90 backdrop-blur transition-colors duration-200 hover:bg-[#0b1d3a] hover:text-white hover:border-indigo-400/40 group-hover:bg-[#0b1d3a] group-hover:text-white group-hover:border-indigo-400/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                    >
+                      {" "}
+                      <Flame className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" /> Up Vote{" "}
+                    </button>
                   </CardContent>
                 </Card>
               ))}
