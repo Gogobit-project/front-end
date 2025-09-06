@@ -7,8 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Shield, ExternalLink, MoreHorizontal, Gavel, Eye } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useUserCollection } from "@/hooks/dashboard/useUserCollections";
 
 export const CollectionTab = () => {
+  const { collection, isLoading } = useUserCollection();
+
+  // Tampilkan pesan loading jika data sedang diambil
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <p>Loading your collection...</p>
+      </div>
+    );
+  }
+
   return (
     <Card className="bg-white/[0.05] border border-white/10 backdrop-blur-sm">
       <CardHeader>
@@ -28,7 +40,7 @@ export const CollectionTab = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {MOCK_USER_COLLECTION.map((item) => {
+            {collection.map((item) => {
               const pnl = item.estimatedValue - item.purchasePrice;
               const pnlPercentage = ((pnl / item.purchasePrice) * 100).toFixed(1);
               return (

@@ -1,4 +1,3 @@
-// /hooks/useUserBids.ts
 import { useState, useEffect, useCallback } from "react";
 import { useWeb3 } from "@/lib/web3-context";
 import { UserBid, BidStatusUI } from "@/lib/types";

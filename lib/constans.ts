@@ -10,7 +10,7 @@ export const USER_STATS = {
 export const MOCK_USER_SUBMISSIONS: UserSubmission[] = [
   { id: "1", domain: "myproject.eth", status: "live", submittedDate: "2024-01-15", startingBid: 2.0, currentBid: 3.5 },
   { id: "2", domain: "innovation.eth", status: "pending", submittedDate: "2024-01-20", startingBid: 5.0 },
-  { id: "3", domain: "future.eth", status: "approved", submittedDate: "2024-01-18", startingBid: 3.0 },
+  { id: "3", domain: "future.eth", status: "live", submittedDate: "2024-01-18", startingBid: 3.0 },
 ];
 
 export const MOCK_USER_COLLECTION: UserCollection[] = [

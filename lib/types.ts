@@ -1,4 +1,6 @@
 export type BidStatusUI = "winning" | "outbid" | "won" | "lost";
+export type SubmissionStatusUI = "pending" | "rejected" | "live";
+export type CollectionStatusUI = "owned" | "listed";
 
 export interface UserBid {
   id: string;
@@ -13,7 +15,7 @@ export interface UserBid {
 export interface UserSubmission {
   id: string;
   domain: string;
-  status: "pending" | "approved" | "rejected" | "live";
+  status: SubmissionStatusUI;
   submittedDate: string;
   startingBid: number;
   currentBid?: number;
@@ -25,5 +27,5 @@ export interface UserCollection {
   purchasePrice: number;
   purchaseDate: string;
   estimatedValue: number;
-  status: "owned" | "listed";
+  status: CollectionStatusUI;
 }

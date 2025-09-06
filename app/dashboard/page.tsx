@@ -2,8 +2,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-
 // Hooks
 import { useWeb3 } from "@/lib/web3-context";
 import { usePendingReturns } from "@/hooks/dashboard/usePendingReturns";
