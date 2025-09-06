@@ -3,14 +3,7 @@ export const revalidate = 0;
 import { getNames } from "@/lib/get-names";
 import { fetchAuctionData } from "@/lib/fetchAuctionData";
 import HomeAnimated from "@/components/home-animated";
-
-export function formatTimeLeft(endTime: Date) {
-  const diff = endTime.getTime() - Date.now();
-  if (diff <= 0) return "Expired";
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  return `${days}d ${hours}h`;
-}
+import { formatTimeLeft } from "@/lib/utils";
 
 export default async function HomePage() {
   const names = await getNames();
