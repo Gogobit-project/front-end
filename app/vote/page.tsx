@@ -9,24 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import Starfield from "@/components/starfield";
 
-import {
-  ArrowUpCircle,
-  Search,
-  SlidersHorizontal,
-  Shield,
-  CheckCircle2,
-} from "lucide-react";
+import { ArrowUpCircle, Search, SlidersHorizontal, Shield, CheckCircle2 } from "lucide-react";
+import { Navbar } from "@/components/navbar";
 
 // --------- MOCK DATA (replace with real fetch) ----------
 type DomainItem = {
@@ -98,7 +87,11 @@ export default function VotePage() {
       toast({
         title: "Wallet belum terhubung",
         description: "Hubungkan wallet untuk melakukan vote.",
-        action: <ToastAction altText="Connect" onClick={connect}>Connect</ToastAction>,
+        action: (
+          <ToastAction altText="Connect" onClick={connect}>
+            Connect
+          </ToastAction>
+        ),
       });
       return;
     }
@@ -129,37 +122,10 @@ export default function VotePage() {
         `,
       }}
     >
-         <Starfield
-             density={0.0014}
-             baseSpeed={0.06}
-             maxParallax={14}
-             className="z-0"
-           />
+      <Starfield density={0.0014} baseSpeed={0.06} maxParallax={14} className="z-0" />
 
       {/* NAV */}
-      <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-             <Link href="/" className="flex items-center gap-2">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
-                <img
-                  src="/gogobit.png"
-                  alt="GogoBid"
-                  width={18}
-                  height={18}
-                />
-              </div>
-              <span className="text-[20px] font-semibold tracking-wide text-white">
-                Gogo<span className="text-indigo-300">Bid</span>
-              </span>
-            </Link>
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/auctions" className="text-slate-300/70 hover:text-white">Auctions</Link>
-            <span className="text-indigo-300 font-medium">Vote</span>
-            <Link href="/submit" className="text-slate-300/70 hover:text-white">Submit Domain</Link>
-          </div>
-          <WalletConnectButton className="border border-indigo-300/40 text-indigo-200 hover:bg-indigo-400/10" />
-        </div>
-      </nav>
+      <Navbar />
 
       {/* HEADER */}
       <section className="py-12 px-6 border-b border-white/10 bg-white/[0.02]">
