@@ -6,13 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 import { Clock, Users, Shield, Search, Filter, SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +14,7 @@ import { getNames } from "@/lib/get-names";
 import { fetchAuctionData } from "@/lib/fetchAuctionData";
 import { getBidderCount } from "@/lib/get-bidder-count";
 import Starfield from "@/components/starfield";
+import { Navbar } from "@/components/navbar";
 
 // ---------- helpers ----------
 function useTimeLeft(endTime: Date) {
@@ -72,10 +67,7 @@ export default function AuctionsPage() {
                 verified: nameItem.registrar?.name === "D3 Registrar",
                 currentBid: parseFloat(onchain.highestBid),
                 endTime: onchain.endTime,
-                timeLeftHours: Math.max(
-                  0,
-                  Math.floor((onchain.endTime.getTime() - Date.now()) / (1000 * 60 * 60))
-                ),
+                timeLeftHours: Math.max(0, Math.floor((onchain.endTime.getTime() - Date.now()) / (1000 * 60 * 60))),
                 bidders: bidderCount,
                 category: "General",
                 status: "live",
@@ -159,53 +151,20 @@ export default function AuctionsPage() {
       }}
     >
       {/* Starfield di layer paling belakang */}
-      <Starfield
-        density={0.0014}
-        baseSpeed={0.06}
-        maxParallax={14}
-        className="z-0"
-      />
+      <Starfield density={0.0014} baseSpeed={0.06} maxParallax={14} className="z-0" />
 
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-           <Link href="/" className="flex items-center gap-2">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
-                <img
-                  src="/gogobit.png"
-                  alt="GogoBid"
-                  width={18}
-                  height={18}
-                />
-              </div>
-              <span className="text-[20px] font-semibold tracking-wide text-white">
-                Gogo<span className="text-indigo-300">Bid</span>
-              </span>
-            </Link>
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/auctions" className="text-indigo-300 font-medium">Auctions</Link>
-            <Link href="/vote" className="text-slate-300/70 hover:text-white">Vote</Link>
-            <Link href="/submit" className="text-slate-300/70 hover:text-white">Submit Domain</Link>
-          </div>
-          <WalletConnectButton className="border border-indigo-300/40 text-indigo-200 hover:bg-indigo-400/10" />
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Header */}
       <section className="py-12 px-6 border-b border-white/10">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-extrabold bg-[linear-gradient(90deg,#60a5fa,#a78bfa)] bg-clip-text text-transparent">
-              Domain Auctions
-            </h1>
-            <p className="text-slate-300/75">
-              Discover and bid on premium curated domains • {filteredAndSortedAuctions.length} auctions available
-            </p>
+            <h1 className="text-4xl font-extrabold bg-[linear-gradient(90deg,#60a5fa,#a78bfa)] bg-clip-text text-transparent">Domain Auctions</h1>
+            <p className="text-slate-300/75">Discover and bid on premium curated domains • {filteredAndSortedAuctions.length} auctions available</p>
           </div>
           <div className="flex items-center gap-4">
-            <Badge className="bg-indigo-400/15 text-indigo-300 border border-indigo-300/30">
-              {auctions.filter((a) => a.status === "live").length} Live
-            </Badge>
+            <Badge className="bg-indigo-400/15 text-indigo-300 border border-indigo-300/30">{auctions.filter((a) => a.status === "live").length} Live</Badge>
             <Badge className="bg-red-500/20 text-red-400 border border-red-500/30">
               {auctions.filter((a) => a.status === "ending-soon").length} Ending Soon
             </Badge>
