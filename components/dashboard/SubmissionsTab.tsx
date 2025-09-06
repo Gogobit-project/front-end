@@ -5,7 +5,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Shield, ExternalLink, MoreHorizontal, Gavel, Eye, Edit, Trash2 } from "lucide-react";
+import { ExternalLink, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
