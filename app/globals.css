@@ -38,6 +38,11 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 }
+html {
+  scroll-behavior: smooth;
+}
+
+
 
 .dark {
   --background: oklch(0.145 0 0);
@@ -72,6 +77,34 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+}
+
+button{
+  cursor: pointer;
+}
+
+/* globals.css */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255,255,255,0.06);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.12),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
 }
 
 @theme inline {

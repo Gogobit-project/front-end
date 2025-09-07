@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform, Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, TrendingUp, Users, Shield } from "lucide-react";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 import Starfield from "@/components/starfield";
+import Reveal from "./Reveal";
+import Footer from "./footer";
+
 
 type Auction = {
   id: string;
@@ -85,25 +88,35 @@ export default function HomeAnimated({
       (featuredAuctions ?? [])
         .map((a) => a.domain)
         .slice(0, 8)
-        .concat(["d3.doma", "prime.doma", "vault.doma"]),
+        .concat([
+          "rare.doma",
+          "genesis.doma",
+          "vault.doma",
+          "prime.doma",
+          "brand.doma",
+        ]),
     [featuredAuctions]
   );
 
-  const d1 = useCounter(70165, 900);
-  const d7 = useCounter(1152929, 900);
-  const s1 = useCounter(4934, 900);
-  const s7 = useCounter(91279, 900);
 
-  const nf = useMemo(() => new Intl.NumberFormat("en-US"), []);
-  const usd = useMemo(
-    () =>
-      new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-        maximumFractionDigits: 2,
-      }),
-    []
-  );
+ const staggerParent: Variants = {
+  hidden: {},
+  show: {
+    transition: {
+      when: "beforeChildren",
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] }, // bezier aman untuk semua versi
+  },
+};
 
   return (
     <div
@@ -121,7 +134,7 @@ export default function HomeAnimated({
       {/* starfield ala D3 */}
       <Starfield
         density={0.0014}
-        baseSpeed={0.06}
+        speed={0.5}
         maxParallax={14}
         className="z-0"
       />
@@ -132,114 +145,109 @@ export default function HomeAnimated({
         style={{ background: bg }}
       />
 
-      {/* NAV */}
-      <nav
-        className={[
-          "sticky top-0 z-40 border-b transition-all duration-300",
-          scrolled
-            ? "border-white/10 bg-[rgba(17,12,32,0.55)] backdrop-blur-xl"
-            : "border-white/5 bg-[rgba(17,12,32,0.28)] backdrop-blur-md",
-        ].join(" ")}
-      >
-        <div className="mx-auto max-w-7xl px-6 py-3.5">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
-                <Image
-                  src="/gogobit.png"
-                  alt="GogoBid"
-                  width={18}
-                  height={18}
-                />
-              </div>
-              <span className="text-[20px] font-semibold tracking-wide text-white">
-                Gogo<span className="text-indigo-300">Bid</span>
-              </span>
-            </Link>
-
-            <div className="hidden items-center gap-8 md:flex">
-              <Link
-                href="/auctions"
-                className="text-slate-300/75 hover:text-white"
-              >
-                Auctions
-              </Link>
-              <Link href="/vote" className="text-slate-300/75 hover:text-white">
-                Vote
-              </Link>
-              <Link
-                href="/submit"
-                className="text-slate-300/75 hover:text-white"
-              >
-                Submit Domain
-              </Link>
-            </div>
-
-            <WalletConnectButton className="rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-3 py-1.5 text-sm text-white shadow hover:brightness-110" />
-          </div>
-        </div>
-      </nav>
+      <br />
+      <br />
 
       {/* HERO */}
-      <section className="px-6 pt-16 pb-10">
-        <div className="mx-auto max-w-4xl text-center">
-          {/* heading */}
-          <h1
-            className="mb-4 text-5xl font-extrabold leading-tight tracking-wide text-white md:text-6xl"
-            style={{ fontFamily: "Space Grotesk, ui-sans-serif, system-ui" }}
+<motion.section>
+  <section className="px-6 pt-16 pb-10">
+    <div className="mx-auto max-w-4xl text-center">
+      {/* heading */}
+      <h1
+        className="mb-3 text-5xl font-extrabold leading-tight tracking-wide text-white md:text-6xl"
+        style={{ fontFamily: "Space Grotesk, ui-sans-serif, system-ui" }}
+      >
+        Own the Future of the Web
+      </h1>
+      <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
+        Secure rare Web3 domains in the most transparent, community-driven
+        auction platform. Every bid is on-chain, every name is verified —
+        no secrets, just fair play.
+      </p>
+
+      {/* CTA */}
+      <div className="mb-16 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+        {/* PRIMARY */}
+        <Button
+          asChild
+          size="lg"
+          className="rounded-xl px-8 py-3 text-lg text-white
+                     bg-gradient-to-r from-violet-500 to-indigo-500
+                     shadow-[0_12px_32px_-12px_rgba(99,102,241,.55)]
+                     ring-1 ring-white/10
+                     hover:brightness-110 hover:shadow-[0_18px_40px_-12px_rgba(99,102,241,.70)]
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300/70
+                     active:scale-[0.98] transition"
+        >
+          <Link href="/auctions">Start Bidding</Link>
+        </Button>
+
+        {/* SECONDARY (glass) */}
+        <Button
+          asChild
+          size="lg"
+          variant="outline"
+          className="rounded-xl px-8 py-3 text-lg
+                     border border-white/15 text-slate-100
+                     bg-white/8 backdrop-blur
+                     hover:bg-white/14 hover:border-white/25 hover:text-white
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/50
+                     active:scale-[0.98] transition"
+        >
+          <Link href="#how-it-works">Discover How It Works</Link>
+        </Button>
+      </div>
+
+      {/* marquee */}
+      <Reveal delay={0.05}>
+        <div className="relative mx-auto mb-14 max-w-4xl overflow-hidden rounded-xl border border-white/10 bg-white/5 py-2 backdrop-blur-sm">
+          <motion.div
+            className="flex gap-8 whitespace-nowrap px-6 text-sm"
+            animate={{ x: ["0%", "-50%"] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           >
-            Domain Auction
-            <br />
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-              Experience premium NFT domain trading in a trusted,
-              community-curated marketplace. Every domain is verified, every
-              auction is transparent.
-            </p>
-          </h1>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button
-              size="lg"
-              className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 text-lg"
-            >
-              <Link href="/auctions">Explore Auctions</Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-border text-foreground hover:bg-muted px-8 py-3 text-lg bg-transparent"
-            >
-              Learn More
-            </Button>
-          </div>
-
-          {/* marquee kecil (opsional) */}
-          <div className="relative mx-auto mb-14 max-w-4xl overflow-hidden rounded-xl border border-white/10 bg-white/5 py-2 backdrop-blur-sm">
-            <motion.div
-              className="flex gap-8 whitespace-nowrap px-6 text-sm"
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            >
-              {[...marqueeDomains, ...marqueeDomains].map((d, i) => (
-                <span key={i} className="text-slate-300/75">
-                  ★ {d}
-                </span>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* stats strip mirip */}
-          <div className="mx-auto max-w-5xl">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-              <StatBox label="Domains Sold" value={usd.format(d1)} />
-              <StatBox label="ETH Volume" value={usd.format(d7 + 0.21)} />
-              <StatBox label="Active Bidder" value={nf.format(s1)} />
-              <StatBox label="Verified" value={"100%"} />
-            
-            </div>
-          </div>
+            {[...marqueeDomains, ...marqueeDomains].map((d, i) => (
+              <span key={i} className="text-slate-300/75">★ {d}</span>
+            ))}
+          </motion.div>
         </div>
-      </section>
+      </Reveal>
+
+      {/* stats (stagger) */}
+      <Reveal delay={0.1}>
+        <div className="mx-auto max-w-5xl">
+          <motion.div
+            className="grid grid-cols-2 gap-3 md:grid-cols-5"
+            variants={staggerParent}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+          >
+            {[
+              ["Domains Claimed", "70,165+"],
+              ["ETH Volume", "1.15M+"],
+              ["Active Bidders", "4,900+"],
+              ["Verified Trust", "100%"],
+              ["Auctions Live Now", "128"],
+              ["Highest Bid", "32.5 ETH"],
+              ["Auctions Closed", "5,200+"],
+              ["Community Members", "12,450+"],
+              ["Countries Reached", "42+"],
+              ["Avg. Auction Time", "24h"],
+            ].map(([label, value], i) => (
+              <motion.div key={i}  variants={staggerItem}>
+                <StatBox label={label} value={value} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </Reveal>
+    </div>
+  </section>
+</motion.section>
+
+
+   
 
       {/* FEATURED AUCTIONS (tetap punyamu, hanya skin) */}
       <section className="px-6 py-12">
@@ -287,63 +295,134 @@ export default function HomeAnimated({
                       icon={<Users className="h-3 w-3" />}
                     />
                   </div>
-
-                  <Button className="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:brightness-110">
-                    Place Bid
-                  </Button>
-                </CardContent>
                   <div className="text-center mt-8">
-            <Button variant="outline" size="lg" className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent">
-              <Link href="/auctions">View All Auctions</Link>
-            </Button>
-          </div>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:brightness-110"
+                    >
+                      <Link href="/auctions">View All Auctions</Link>
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-<section className="py-10 px-4 border-t border-border/50 bg-purple-900/5 backdrop-blur-sm rounded-2xl">
-  <div className="max-w-3xl mx-auto">
-    <div className="grid md:grid-cols-3 gap-6 text-center">
-      <div className="space-y-3 p-4">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-          <Shield className="w-5 h-5 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold text-white">Curated Quality</h3>
-        <p className="text-slate-300/80 text-sm">
-          Every domain is hand-picked and verified by our community of experts
-        </p>
-      </div>
+     <Reveal>
+  <div className="max-w-5xl mx-auto text-center" id="how-it-works">
+    <h2 className="text-3xl font-bold text-white mb-10">How It Works</h2>
 
-      <div className="space-y-3 p-4">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-          <TrendingUp className="w-5 h-5 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold text-white">Transparent Bidding</h3>
-        <p className="text-slate-300/80 text-sm">
-          All bids are on-chain with complete transparency and immutable history
-        </p>
-      </div>
-
-      <div className="space-y-3 p-4">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-          <Users className="w-5 h-5 text-primary" />
-        </div>
-        <h3 className="text-lg font-semibold text-white">Trusted Community</h3>
-        <p className="text-slate-300/80 text-sm">
-          Join experienced domainers and Web3 enthusiasts in premium auctions
-        </p>
-      </div>
-    </div>
+    <motion.div
+      className="grid items-stretch md:grid-cols-4 gap-8 text-left"
+      variants={staggerParent}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.2 }}
+    >
+      {[
+        { n: 1, title: "Connect Wallet", desc: "Use MetaMask, WalletConnect, or your favorite Web3 wallet to join." },
+        { n: 2, title: "Browse Domains", desc: "Explore rare, curated Web3 domains verified by the community." },
+        { n: 3, title: "Place Your Bid", desc: "Submit your offer on-chain. Every bid is transparent and immutable." },
+        { n: 4, title: "Win & Own", desc: "If you win, the domain is yours — fully decentralized, forever." },
+      ].map((s) => (
+        <motion.div
+          key={s.n}
+          variants={staggerItem}
+          className="group relative h-full space-y-3 rounded-xl border border-white/10 bg-white/5 p-5"
+        >
+          <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+            <span className="text-indigo-300 font-bold">{s.n}</span>
+          </div>
+          <h3 className="text-white font-semibold">{s.title}</h3>
+          <p className="text-slate-300/80 text-sm">{s.desc}</p>
+        </motion.div>
+      ))}
+    </motion.div>
   </div>
-</section>
+</Reveal>
+      <br />
+      <br />
 
+      <section className="">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Join the Community
+          </h2>
+          <p className="text-slate-300/80 text-lg mb-8">
+            Be part of 12,000+ Web3 pioneers shaping the future of digital
+            ownership. Get early access to premium domains, live auction alerts,
+            and community rewards.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="https://discord.gg/yourlink"
+              className="rounded-lg bg-indigo-500 px-6 py-3 text-white font-semibold shadow hover:brightness-110"
+            >
+              Join Discord
+            </a>
+            <a
+              href="https://t.me/yourlink"
+              className="rounded-lg border border-white/20 px-6 py-3 text-white font-semibold hover:bg-white/10"
+            >
+              Join Telegram
+            </a>
+          </div>
+        </div>
+      </section>
 
+      <br />
+      <br />
 
+      <section >
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 text-center items-stretch">
+            <div className="space-y-3 p-6 border border-white/10 bg-white/5 rounded-xl h-full flex flex-col">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                <Shield className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                Curated by Experts
+              </h3>
+              <p className="text-slate-300/80 text-sm flex-grow">
+                Only the most valuable domains are hand-picked and approved by
+                the community.
+              </p>
+            </div>
 
+            <div className="space-y-3 p-6 border border-white/10 bg-white/5 rounded-xl h-full flex flex-col">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                100% On-Chain Transparency
+              </h3>
+              <p className="text-slate-300/80 text-sm flex-grow">
+                Every bid, every history — forever secured on-chain. Nothing
+                hidden.
+              </p>
+            </div>
 
+            <div className="space-y-3 p-6 border border-white/10 bg-white/5 rounded-xl h-full flex flex-col">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                Win with the Community
+              </h3>
+              <p className="text-slate-300/80 text-sm flex-grow">
+                Join a growing network of pioneers, domainers, and Web3
+                believers.
+              </p>
+            </div>
+          </div>
+        </div>
+         <Footer/>
+      </section>
     </div>
+   
   );
 }
 

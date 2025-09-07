@@ -41,9 +41,10 @@ export default function DashboardPage() {
         `,
       }}
     >
-      <Starfield density={0.0014} baseSpeed={0.06} maxParallax={14} className="z-0" />
-
-      <Navbar />
+      <Starfield density={0.0014} speed={0.5} maxParallax={14} className="z-0" />
+      <br />
+      <br />
+      {/* <Navbar /> */}
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <DashboardHeader account={account} balance={balance!} />

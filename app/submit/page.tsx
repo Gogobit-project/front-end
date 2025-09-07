@@ -37,6 +37,7 @@ import { getAuctionContract, getAuctionContractWithSigner } from "@/lib/auction-
 import { getUserDomains } from "@/lib/get-user-domain";
 import { getDomaContract } from "@/lib/doma-contract";
 import Starfield from "@/components/starfield";
+import { Navbar } from "@/components/navbar";
 
 export default function SubmitDomainPage() {
   const { account, isConnected } = useWeb3();
@@ -139,7 +140,7 @@ export default function SubmitDomainPage() {
       >
        <Starfield
              density={0.0014}
-             baseSpeed={0.06}
+             speed={0.5}
              maxParallax={14}
              className="z-0"
            />
@@ -192,13 +193,13 @@ export default function SubmitDomainPage() {
     >
        <Starfield
              density={0.0014}
-             baseSpeed={0.06}
+             speed={0.5}
              maxParallax={14}
              className="z-0"
            />
 
       {/* NAV */}
-      <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
+      {/* <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
              <Link href="/" className="flex items-center gap-2">
               <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
@@ -224,7 +225,10 @@ export default function SubmitDomainPage() {
           </div>
           <WalletConnectButton className="border border-indigo-300/40 text-indigo-200 hover:bg-indigo-400/10" />
         </div>
-      </nav>
+      </nav> */}
+      <br />
+      <br />
+      {/* <Navbar/> */}
 
       {/* BREADCRUMB */}
       <div className="border-b border-white/10 bg-white/[0.02]">
@@ -242,7 +246,7 @@ export default function SubmitDomainPage() {
 
       <div className="max-w-4xl mx-auto px-6 py-8">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold mb-4">Submit Your Domain</h1>
+          <h1 className="text-4xl font-extrabold bg-[linear-gradient(90deg,#60a5fa,#a78bfa)] bg-clip-text text-transparent">Submit Your Domain</h1>
           <p className="text-slate-300/85 text-lg leading-relaxed max-w-2xl mx-auto">
             Submit your premium domain for curation and auction on GogoBid. Our expert team reviews each submission to
             ensure quality and authenticity.
