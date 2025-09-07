@@ -20,6 +20,7 @@ const grotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "GogoBid - Curated On-Chain Domain Auctions",
+  icons: "/gogobit.png",
   description: "A modern Web3 dApp for high-end NFT domain auctions. Emphasizing trust, quality, and seamless bidding.",
   generator: "v0.app",
 }

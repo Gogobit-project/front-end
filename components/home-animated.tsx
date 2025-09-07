@@ -11,6 +11,7 @@ import { Clock, TrendingUp, Users, Shield } from "lucide-react";
 import { WalletConnectButton } from "@/components/wallet-connect-button";
 import Starfield from "@/components/starfield";
 import Reveal from "./Reveal";
+import Footer from "./footer";
 
 
 type Auction = {
@@ -342,11 +343,6 @@ const staggerItem: Variants = {
     </motion.div>
   </div>
 </Reveal>
-
-
-
-
-      
       <br />
       <br />
 
@@ -380,7 +376,7 @@ const staggerItem: Variants = {
       <br />
       <br />
 
-      <section className="py-10 px-4 border-t border-border/50 bg-purple-900/5 backdrop-blur-sm rounded-2xl">
+      <section >
         <div className="max-w-5xl mx-auto">
           <div className="grid md:grid-cols-3 gap-6 text-center items-stretch">
             <div className="space-y-3 p-6 border border-white/10 bg-white/5 rounded-xl h-full flex flex-col">
@@ -423,8 +419,10 @@ const staggerItem: Variants = {
             </div>
           </div>
         </div>
+         <Footer/>
       </section>
     </div>
+   
   );
 }
 
