@@ -10,14 +10,15 @@ export const getStatusColor = (status: string) => {
     case "winning":
     case "won":
     case "approved":
-    case "live":
+    case "Live":
     case "owned":
       return "bg-green-500/10 text-green-400 border-green-500/20";
     case "outbid":
     case "lost":
     case "rejected":
+    case "Ended":
       return "bg-red-500/10 text-red-400 border-red-500/20";
-    case "pending":
+    case "Pending":
       return "bg-yellow-500/10 text-yellow-400 border-yellow-500/20";
     case "listed":
       return "bg-blue-500/10 text-blue-400 border-blue-500/20";

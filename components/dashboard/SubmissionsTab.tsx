@@ -8,8 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import { getStatusColor } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useUserSubmissions } from "@/hooks/dashboard/useUserSubmissions";
 
 export const SubmissionsTab = () => {
+  const { submissions, isLoading } = useUserSubmissions();
+
+  if (isLoading) {
+    return <div className="text-center p-12">Loading submissions...</div>;
+  }
   return (
     <Card className="bg-white/[0.05] border border-white/10 backdrop-blur-sm">
       <CardHeader>
@@ -27,23 +33,20 @@ export const SubmissionsTab = () => {
               <TableHead>Domain</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Submitted</TableHead>
-              <TableHead>Starting Bid</TableHead>
+
               <TableHead>Current Bid</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {MOCK_USER_SUBMISSIONS.map((submission) => (
-              <TableRow key={submission.id}>
+            {submissions.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="font-mono">{item.domain}</TableCell>
                 <TableCell>
-                  <span className="font-mono font-medium">{submission.domain}</span>
+                  <Badge className={getStatusColor(item.status)}>{item.status}</Badge>
                 </TableCell>
-                <TableCell>
-                  <Badge className={getStatusColor(submission.status)}>{submission.status.charAt(0).toUpperCase() + submission.status.slice(1)}</Badge>
-                </TableCell>
-                <TableCell>{submission.submittedDate}</TableCell>
-                <TableCell className="font-semibold">{submission.startingBid} ETH</TableCell>
-                <TableCell className="font-semibold text-indigo-300">{submission.currentBid ? `${submission.currentBid} ETH` : "-"}</TableCell>
+                <TableCell>{item.submittedDate}</TableCell>
+                <TableCell className="font-semibold">{item.currentBid}</TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -56,7 +59,7 @@ export const SubmissionsTab = () => {
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </DropdownMenuItem>
-                      {submission.status === "pending" && (
+                      {item.status === "Pending" && (
                         <>
                           <DropdownMenuItem>
                             <Edit className="mr-2 h-4 w-4" />
@@ -68,9 +71,9 @@ export const SubmissionsTab = () => {
                           </DropdownMenuItem>
                         </>
                       )}
-                      {submission.status === "live" && (
+                      {item.status === "Live" && (
                         <DropdownMenuItem asChild>
-                          <Link href={`/auctions/${submission.id}`}>
+                          <Link href={`/auctions/${item.id}`}>
                             <ExternalLink className="mr-2 h-4 w-4" />
                             View Auction
                           </Link>

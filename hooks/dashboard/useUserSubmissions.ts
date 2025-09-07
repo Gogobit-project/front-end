@@ -1,50 +1,93 @@
 // /hooks/useUserSubmissions.ts
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { ethers, EventLog } from "ethers";
+import { useWeb3 } from "@/lib/web3-context";
 import { UserSubmission } from "@/lib/types";
+import { getAllSubmissionRelatedEvents } from "@/lib/submisson-events";
+import { getDomainNameByTokenId } from "@/lib/subgraphDashboard";
 import { MOCK_USER_SUBMISSIONS } from "@/lib/constans";
 
 export const useUserSubmissions = () => {
-  // 1. State untuk menyimpan data submissions
+  const { account } = useWeb3();
   const [submissions, setSubmissions] = useState<UserSubmission[]>([]);
-
-  // 2. State untuk menandakan proses loading (ini best practice!)
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // 3. Fungsi untuk "mengambil" data.
-    // Kita buat async agar polanya sama seperti mengambil data dari API sungguhan.
-    const fetchSubmissions = async () => {
-      try {
-        setIsLoading(true);
+  const fetchSubmissions = useCallback(async () => {
+    if (!account) return;
+    setIsLoading(true);
 
-        // --- SIMULASI PENGAMBILAN DATA ---
-        // Di masa depan, Anda akan mengganti bagian ini dengan panggilan API/Subgraph
-        // Contoh: const realData = await fetch('https://api.anda.com/submissions');
-        // setSubmissions(await realData.json());
+    try {
+      // 1. Ambil semua data event yang relevan dalam satu panggilan
+      const { submittedLogs, startedLogs, endedLogs, bidLogs } = await getAllSubmissionRelatedEvents(account);
 
-        // Untuk sekarang, kita gunakan mock data yang sudah ada.
-        // Kita beri jeda 500ms agar loading spinner sempat terlihat.
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        setSubmissions(MOCK_USER_SUBMISSIONS);
-      } catch (error) {
-        console.error("Failed to fetch submissions:", error);
-        // Di sini Anda bisa menambahkan state untuk error jika perlu
-        setSubmissions([]); // Kosongkan data jika gagal
-      } finally {
-        // Apapun yang terjadi (berhasil atau gagal), loading harus selesai.
-        setIsLoading(false);
+      if (submittedLogs.length === 0) {
+        setSubmissions([]);
+        return;
       }
-    };
 
+      // 2. Proses data event untuk lookups yang cepat
+      const startedMap = new Map(startedLogs.map((log) => [(log as EventLog).args.tokenId.toString(), log as EventLog]));
+      const endedSet = new Set(endedLogs.map((log) => (log as EventLog).args.tokenId.toString()));
+
+      const highestBids = new Map<string, ethers.BigNumberish>();
+      bidLogs.forEach((log) => {
+        const tokenId = (log as EventLog).args.tokenId.toString();
+        const currentHighest = highestBids.get(tokenId) || 0;
+        if ((log as EventLog).args.amount > currentHighest) {
+          highestBids.set(tokenId, (log as EventLog).args.amount);
+        }
+      });
+
+      // 3. Gabungkan semua informasi untuk setiap domain yang disubmit
+      const finalSubmissions = await Promise.all(
+        submittedLogs.map(async (log) => {
+          const tokenId = (log as EventLog).args.tokenId.toString();
+
+          // Tentukan Status
+          let status: UserSubmission["status"];
+          if (endedSet.has(tokenId)) {
+            status = "Ended";
+          } else if (startedMap.has(tokenId)) {
+            status = "Live";
+          } else {
+            status = "Pending";
+          }
+
+          // Dapatkan Tanggal Submit dari timestamp blok
+          const block = await log.getBlock();
+          const submittedDate = new Date(block.timestamp * 1000).toLocaleDateString("id-ID");
+
+          // Dapatkan Current Bid
+          const currentBidWei = highestBids.get(tokenId) || "0";
+          const currentBid = ethers.formatEther(currentBidWei);
+
+          // Dapatkan Nama Domain dari Subgraph
+          const domainName = await getDomainNameByTokenId(tokenId);
+
+          return {
+            id: tokenId,
+            domain: domainName || `Unknown Domain #${tokenId.slice(0, 5)}`,
+            status: status,
+            submittedDate: submittedDate,
+            currentBid: `${parseFloat(currentBid).toFixed(4)} ETH`,
+          };
+        })
+      );
+
+      setSubmissions(finalSubmissions);
+    } catch (error) {
+      console.error("Gagal memuat data submissions:", error);
+      setSubmissions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [account]);
+
+  useEffect(() => {
     fetchSubmissions();
+  }, [fetchSubmissions]);
 
-    // Dependency array kita kosongkan `[]` karena hook ini belum bergantung pada
-    // state atau props lain (seperti `account`). Ia hanya berjalan sekali saat komponen mount.
-  }, []);
-
-  // 4. Kembalikan state yang dibutuhkan oleh komponen
   return { submissions, isLoading };
 };
