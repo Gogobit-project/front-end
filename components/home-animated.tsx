@@ -85,7 +85,13 @@ export default function HomeAnimated({
       (featuredAuctions ?? [])
         .map((a) => a.domain)
         .slice(0, 8)
-        .concat(["d3.doma", "prime.doma", "vault.doma"]),
+        .concat([
+          "rare.doma",
+          "genesis.doma",
+          "vault.doma",
+          "prime.doma",
+          "brand.doma",
+        ]),
     [featuredAuctions]
   );
 
@@ -121,7 +127,7 @@ export default function HomeAnimated({
       {/* starfield ala D3 */}
       <Starfield
         density={0.0014}
-        baseSpeed={0.06}
+        speed={0.5}
         maxParallax={14}
         className="z-0"
       />
@@ -132,8 +138,10 @@ export default function HomeAnimated({
         style={{ background: bg }}
       />
 
+      <br />
+      <br />
       {/* NAV */}
-      <nav
+      {/* <nav
         className={[
           "sticky top-0 z-40 border-b transition-all duration-300",
           scrolled
@@ -178,7 +186,7 @@ export default function HomeAnimated({
             <WalletConnectButton className="rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-3 py-1.5 text-sm text-white shadow hover:brightness-110" />
           </div>
         </div>
-      </nav>
+      </nav> */}
 
       {/* HERO */}
       <section className="px-6 pt-16 pb-10">
@@ -188,12 +196,12 @@ export default function HomeAnimated({
             className="mb-4 text-5xl font-extrabold leading-tight tracking-wide text-white md:text-6xl"
             style={{ fontFamily: "Space Grotesk, ui-sans-serif, system-ui" }}
           >
-            Domain Auction
+            Own the Future of the Web
             <br />
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-              Experience premium NFT domain trading in a trusted,
-              community-curated marketplace. Every domain is verified, every
-              auction is transparent.
+              Secure rare Web3 domains in the most transparent, community-driven
+              auction platform. Every bid is on-chain, every name is verified —
+              no secrets, just fair play.
             </p>
           </h1>
 
@@ -202,14 +210,15 @@ export default function HomeAnimated({
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 text-lg"
             >
-              <Link href="/auctions">Explore Auctions</Link>
+              <Link href="/auctions">Start Bidding</Link>
             </Button>
             <Button
               variant="outline"
               size="lg"
               className="border-border text-foreground hover:bg-muted px-8 py-3 text-lg bg-transparent"
+              asChild
             >
-              Learn More
+              <Link href="#how-it-works">Discover How It Works</Link>
             </Button>
           </div>
 
@@ -231,11 +240,16 @@ export default function HomeAnimated({
           {/* stats strip mirip */}
           <div className="mx-auto max-w-5xl">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-              <StatBox label="Domains Sold" value={usd.format(d1)} />
-              <StatBox label="ETH Volume" value={usd.format(d7 + 0.21)} />
-              <StatBox label="Active Bidder" value={nf.format(s1)} />
-              <StatBox label="Verified" value={"100%"} />
-            
+              <StatBox label="Domains Claimed" value="70,165+" />
+              <StatBox label="ETH Volume" value="1.15M+" />
+              <StatBox label="Active Bidders" value="4,900+" />
+              <StatBox label="Verified Trust" value="100%" />
+              <StatBox label="Auctions Live Now" value="128" />
+              <StatBox label="Highest Bid" value="32.5 ETH" />
+              <StatBox label="Auctions Closed" value="5,200+" />
+              <StatBox label="Community Members" value="12,450+" />
+              <StatBox label="Countries Reached" value="42+" />
+              <StatBox label="Avg. Auction Time" value="24h" />
             </div>
           </div>
         </div>
@@ -287,62 +301,147 @@ export default function HomeAnimated({
                       icon={<Users className="h-3 w-3" />}
                     />
                   </div>
-
-                  <Button className="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:brightness-110">
-                    Place Bid
-                  </Button>
-                </CardContent>
                   <div className="text-center mt-8">
-            <Button variant="outline" size="lg" className="border-primary/20 text-primary hover:bg-primary/10 bg-transparent">
-              <Link href="/auctions">View All Auctions</Link>
-            </Button>
-          </div>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:brightness-110"
+                    >
+                      <Link href="/auctions">View All Auctions</Link>
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-<section className="py-10 px-4 border-t border-border/50 bg-purple-900/5 backdrop-blur-sm rounded-2xl">
-  <div className="max-w-3xl mx-auto">
-    <div className="grid md:grid-cols-3 gap-6 text-center">
-      <div className="space-y-3 p-4">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-          <Shield className="w-5 h-5 text-primary" />
+      <section>
+        <div className="max-w-5xl mx-auto text-center" id="how-it-works">
+          <h2 className="text-3xl font-bold text-white mb-10">How It Works</h2>
+          <div className="grid md:grid-cols-4 gap-8 text-left">
+            <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/5">
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <span className="text-indigo-300 font-bold text-lg">1</span>
+              </div>
+              <h3 className="text-white font-semibold">Connect Wallet</h3>
+              <p className="text-slate-300/80 text-sm">
+                Use MetaMask, WalletConnect, or your favorite Web3 wallet to
+                join.
+              </p>
+            </div>
+
+            <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/5">
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <span className="text-indigo-300 font-bold text-lg">2</span>
+              </div>
+              <h3 className="text-white font-semibold">Browse Domains</h3>
+              <p className="text-slate-300/80 text-sm">
+                Explore rare, curated Web3 domains verified by the community.
+              </p>
+            </div>
+
+            <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/5">
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <span className="text-indigo-300 font-bold text-lg">3</span>
+              </div>
+              <h3 className="text-white font-semibold">Place Your Bid</h3>
+              <p className="text-slate-300/80 text-sm">
+                Submit your offer on-chain. Every bid is transparent and
+                immutable.
+              </p>
+            </div>
+
+            <div className="space-y-3 p-4 rounded-xl border border-white/10 bg-white/5">
+              <div className="w-10 h-10 bg-indigo-500/20 rounded-lg flex items-center justify-center">
+                <span className="text-indigo-300 font-bold text-lg">4</span>
+              </div>
+              <h3 className="text-white font-semibold">Win & Own</h3>
+              <p className="text-slate-300/80 text-sm">
+                If you win, the domain is yours — fully decentralized, forever.
+              </p>
+            </div>
+          </div>
         </div>
-        <h3 className="text-lg font-semibold text-white">Curated Quality</h3>
-        <p className="text-slate-300/80 text-sm">
-          Every domain is hand-picked and verified by our community of experts
-        </p>
-      </div>
+      </section>
+      <br />
+      <br />
 
-      <div className="space-y-3 p-4">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-          <TrendingUp className="w-5 h-5 text-primary" />
+      <section className="">
+        <div className="max-w-3xl mx-auto text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Join the Community
+          </h2>
+          <p className="text-slate-300/80 text-lg mb-8">
+            Be part of 12,000+ Web3 pioneers shaping the future of digital
+            ownership. Get early access to premium domains, live auction alerts,
+            and community rewards.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="https://discord.gg/yourlink"
+              className="rounded-lg bg-indigo-500 px-6 py-3 text-white font-semibold shadow hover:brightness-110"
+            >
+              Join Discord
+            </a>
+            <a
+              href="https://t.me/yourlink"
+              className="rounded-lg border border-white/20 px-6 py-3 text-white font-semibold hover:bg-white/10"
+            >
+              Join Telegram
+            </a>
+          </div>
         </div>
-        <h3 className="text-lg font-semibold text-white">Transparent Bidding</h3>
-        <p className="text-slate-300/80 text-sm">
-          All bids are on-chain with complete transparency and immutable history
-        </p>
-      </div>
+      </section>
 
-      <div className="space-y-3 p-4">
-        <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-          <Users className="w-5 h-5 text-primary" />
+      <br />
+      <br />
+
+      <section className="py-10 px-4 border-t border-border/50 bg-purple-900/5 backdrop-blur-sm rounded-2xl">
+        <div className="max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 text-center items-stretch">
+            <div className="space-y-3 p-6 border border-white/10 bg-white/5 rounded-xl h-full flex flex-col">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                <Shield className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                Curated by Experts
+              </h3>
+              <p className="text-slate-300/80 text-sm flex-grow">
+                Only the most valuable domains are hand-picked and approved by
+                the community.
+              </p>
+            </div>
+
+            <div className="space-y-3 p-6 border border-white/10 bg-white/5 rounded-xl h-full flex flex-col">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                100% On-Chain Transparency
+              </h3>
+              <p className="text-slate-300/80 text-sm flex-grow">
+                Every bid, every history — forever secured on-chain. Nothing
+                hidden.
+              </p>
+            </div>
+
+            <div className="space-y-3 p-6 border border-white/10 bg-white/5 rounded-xl h-full flex flex-col">
+              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">
+                Win with the Community
+              </h3>
+              <p className="text-slate-300/80 text-sm flex-grow">
+                Join a growing network of pioneers, domainers, and Web3
+                believers.
+              </p>
+            </div>
+          </div>
         </div>
-        <h3 className="text-lg font-semibold text-white">Trusted Community</h3>
-        <p className="text-slate-300/80 text-sm">
-          Join experienced domainers and Web3 enthusiasts in premium auctions
-        </p>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-
-
-
+      </section>
     </div>
   );
 }

@@ -11,7 +11,7 @@ export function DashboardHeader({ account, balance }: DashboardHeaderProps) {
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+        <h1 className="text-4xl font-extrabold bg-[linear-gradient(90deg,#60a5fa,#a78bfa)] bg-clip-text text-transparent">Dashboard</h1>
         <p className="text-slate-300/85">Manage your bids, submissions, and collection</p>
       </div>
       <div className="flex items-center gap-4">

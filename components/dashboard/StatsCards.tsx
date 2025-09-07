@@ -18,7 +18,7 @@ interface StatsCardsProps {
 export function StatsCards({ stats, withdrawableAmount, isWithdrawing, onWithdraw }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-      <Card className="bg-card border-border/50">
+      <Card className="bg-white/[0.05] border border-white/10 backdrop-blur-sm">
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
             <Gavel className="w-5 h-5 text-primary" />
@@ -30,7 +30,7 @@ export function StatsCards({ stats, withdrawableAmount, isWithdrawing, onWithdra
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border/50">
+      <Card className="bg-white/[0.05] border border-white/10 backdrop-blur-sm">
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
             <Trophy className="w-5 h-5 text-green-400" />
@@ -42,7 +42,7 @@ export function StatsCards({ stats, withdrawableAmount, isWithdrawing, onWithdra
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border/50 col-span-2 md:col-span-1">
+      <Card className="bg-white/[0.05] border border-white/10 backdrop-blur-sm">
         <CardContent className="p-4">
           <div className="flex items-start justify-between">
             <div>
@@ -64,7 +64,7 @@ export function StatsCards({ stats, withdrawableAmount, isWithdrawing, onWithdra
         </CardContent>
       </Card>
 
-      <Card className="bg-card border-border/50">
+      <Card className="bg-white/[0.05] border border-white/10 backdrop-blur-sm">
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
             <TrendingUp className="w-5 h-5 text-primary" />

@@ -189,16 +189,18 @@ export default function VotePage() {
         `,
       }}
     >
-      <Starfield density={0.0014} baseSpeed={0.06} maxParallax={14} className="z-0" />
+      <Starfield density={0.0014} speed={0.5} maxParallax={14} className="z-0" />
+      <br />
+      <br />
 
       {/* NAV */}
-      <Navbar />
+      {/* <Navbar /> */}
 
       {/* HEADER */}
       <section className="py-12 px-6 border-b border-white/10 bg-white/[0.02]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Community Vote</h1>
+            <h1 className="text-4xl font-extrabold bg-[linear-gradient(90deg,#60a5fa,#a78bfa)] bg-clip-text text-transparent">Community Vote</h1>
             <p className="text-slate-300/85">Select and support your favorite domain</p>
           </div>
 
@@ -246,16 +248,18 @@ export default function VotePage() {
                     <div className="text-xs text-slate-400 mt-1">
                       Seller: {s.seller.slice(0, 6)}...{s.seller.slice(-4)}
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <button
+                      <div className="text-center mt-8">
+                    <Button
                       onClick={() => submit(s.tokenId)}
-                      className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-white/20 bg-white/10 text-white/90 backdrop-blur transition-colors duration-200 hover:bg-[#0b1d3a] hover:text-white hover:border-indigo-400/40 group-hover:bg-[#0b1d3a] group-hover:text-white group-hover:border-indigo-400/40 focus:outline-none focus:ring-2 focus:ring-indigo-400/30"
+                      variant="outline"
+                      size="lg"
+                      className="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:brightness-110"
                     >
-                      {" "}
-                      <Flame className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" /> Up Vote{" "}
-                    </button>
-                  </CardContent>
+                      Up vote
+                    </Button>
+                  </div>
+                  </CardHeader>
+                
                 </Card>
               ))}
             </div>

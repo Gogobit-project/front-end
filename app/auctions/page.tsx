@@ -14,7 +14,9 @@ import { getNames } from "@/lib/get-names";
 import { fetchAuctionData } from "@/lib/fetchAuctionData";
 import { getBidderCount } from "@/lib/get-bidder-count";
 import Starfield from "@/components/starfield";
-import { Navbar } from "@/components/navbar";
+import { AuctionSkeletonCard } from "@/components/loading-data";
+
+// import { Navbar } from "@/components/navbar";
 
 // ---------- helpers ----------
 function useTimeLeft(endTime: Date) {
@@ -47,19 +49,39 @@ export default function AuctionsPage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [auctions, setAuctions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  function withTimeout<T>(p: Promise<T>, ms = 12000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error("Timeout")), ms);
+    p.then((v) => { clearTimeout(id); resolve(v); })
+     .catch((e) => { clearTimeout(id); reject(e); });
+  });
+}
+
 
   // Fetch
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const names = await getNames();
-        const results = await Promise.all(
-          names.flatMap((nameItem: any) =>
-            nameItem.tokens.map(async (token: any) => {
+useEffect(() => {
+  let cancelled = false;
+  const inFlight = { current: false } as { current: boolean }; // atau useRef(false)
+
+  async function load(refresh: boolean) {
+    if (inFlight.current) return;           // cegah overlap
+    inFlight.current = true;
+
+    if (refresh) setIsRefreshing(true);
+    else setIsInitialLoading(true);
+
+    try {
+      const names = await withTimeout(getNames(), 12000);
+
+      const promises = names.flatMap((nameItem: any) =>
+        (nameItem.tokens ?? []).map((token: any) =>
+          withTimeout(
+            (async () => {
               const onchain = await fetchAuctionData(token.tokenId);
-              if (!onchain.active || onchain.endTime.getTime() <= Date.now()) return null;
+              if (!onchain?.active || onchain.endTime.getTime() <= Date.now()) return null;
               const bidderCount = await getBidderCount(token.tokenId);
               return {
                 id: token.tokenId,
@@ -73,20 +95,44 @@ export default function AuctionsPage() {
                 status: "live",
                 startingBid: 0,
               };
-            })
+            })(),
+            12000
           )
-        );
-        setAuctions(results.flat().filter(Boolean));
-      } catch (e) {
-        console.error("Error loading auctions", e);
-      } finally {
-        setLoading(false);
+        )
+      );
+
+      const settled = await Promise.allSettled(promises);
+      const items = settled
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === "fulfilled")
+        .map((r) => r.value)
+        .filter(Boolean);
+
+      if (!cancelled) setAuctions(items);
+    } catch (e) {
+      console.error("Error loading auctions", e);
+    } finally {
+      if (!cancelled) {
+        refresh ? setIsRefreshing(false) : setIsInitialLoading(false);
       }
+      inFlight.current = false;
     }
-    load();
-    const id = setInterval(load, 15000);
-    return () => clearInterval(id);
-  }, []);
+  }
+
+  // initial
+  load(false);
+
+  // refresh loop TANPA setInterval (biar nunggu selesai dulu)
+  let t: any;
+  const tick = async () => {
+    if (cancelled) return;
+    await load(true);
+    t = setTimeout(tick, 15000);
+  };
+  t = setTimeout(tick, 15000);
+
+  return () => { cancelled = true; clearTimeout(t); };
+}, []);
+
 
   // Filter & sort
   const filteredAndSortedAuctions = useMemo(() => {
@@ -151,10 +197,11 @@ export default function AuctionsPage() {
       }}
     >
       {/* Starfield di layer paling belakang */}
-      <Starfield density={0.0014} baseSpeed={0.06} maxParallax={14} className="z-0" />
-
+      <Starfield density={0.0014} speed={0.5} maxParallax={14} className="z-0" />
+      <br />
+      <br />
       {/* Navbar */}
-      <Navbar />
+      {/* <Navbar /> */}
 
       {/* Header */}
       <section className="py-12 px-6 border-b border-white/10">
@@ -245,70 +292,87 @@ export default function AuctionsPage() {
 
       {/* Grid */}
       <section className="py-8 px-6">
-        <div className="max-w-7xl mx-auto">
-          {filteredAndSortedAuctions.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-black/40 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-slate-500" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">No auctions found</h3>
-              <p className="text-slate-400">Try adjusting your filters or search terms</p>
-            </div>
-          ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredAndSortedAuctions.map((auction) => (
-                <Card
-                  key={auction.id}
-                  className="group bg-white/[0.05] border border-white/10 backdrop-blur-sm hover:border-indigo-300/40 transition relative overflow-hidden"
-                >
-                  {/* hover glow */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(99,102,241,0.15),transparent_60%)]" />
-                  <CardContent className="relative p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-lg font-semibold">{auction.domain}</span>
-                        {auction.verified && <Shield className="w-4 h-4 text-indigo-300" />}
-                      </div>
-                      <Badge className={getStatusColor(auction.status)}>{getStatusText(auction.status)}</Badge>
-                    </div>
+  <div className="max-w-7xl mx-auto">
 
-                    <div className="space-y-3 mb-4 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Current Bid</span>
-                        <span className="font-semibold text-indigo-300">{auction.currentBid} ETH</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="flex items-center gap-1 text-slate-400">
-                          <Clock className="w-3 h-3" />
-                          Time Left
-                        </span>
-                        <AuctionTime endTime={new Date(auction.endTime)} />
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="flex items-center gap-1 text-slate-400">
-                          <Users className="w-3 h-3" />
-                          Bidders
-                        </span>
-                        <span>{auction.bidders}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-400">Category</span>
-                        <Badge className="bg-white/10 text-slate-300 text-xs">{auction.category}</Badge>
-                      </div>
-                    </div>
-
-                    <Button className="w-full rounded-xl bg-gradient-to-r from-[#0b1d3a] via-[#13254a] to-[#0b1d3a] text-white hover:brightness-110">
-                      <Link href={`/auctions/${auction.id}`} className="w-full">
-                        View Auction
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+    {/* SKELETON GRID */}
+    {isInitialLoading ? (
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <AuctionSkeletonCard key={i} />
+        ))}
+      </div>
+    ) : filteredAndSortedAuctions.length === 0 ? (
+      /* EMPTY STATE */
+      <div className="text-center py-16">
+        <div className="w-16 h-16 bg-black/40 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <Search className="w-8 h-8 text-slate-500" />
         </div>
-      </section>
+        <h3 className="text-xl font-semibold mb-2">No auctions found</h3>
+        <p className="text-slate-400">Try adjusting your filters or search terms</p>
+      </div>
+    ) : (
+      /* CONTENT GRID */
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredAndSortedAuctions.map((auction) => (
+          <Card
+            key={auction.id}
+            className="group bg-white/[0.05] border border-white/10 backdrop-blur-sm hover:border-indigo-300/40 transition relative overflow-hidden"
+          >
+            {/* hover glow */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition duration-500 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(99,102,241,0.15),transparent_60%)]" />
+            <CardContent className="relative p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-lg font-semibold">{auction.domain}</span>
+                  {auction.verified && <Shield className="w-4 h-4 text-indigo-300" />}
+                </div>
+                <Badge className={getStatusColor(auction.status)}>{getStatusText(auction.status)}</Badge>
+              </div>
+
+              <div className="space-y-3 mb-4 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Current Bid</span>
+                  <span className="font-semibold text-indigo-300">{auction.currentBid} ETH</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <Clock className="w-3 h-3" />
+                    Time Left
+                  </span>
+                  <AuctionTime endTime={new Date(auction.endTime)} />
+                </div>
+                <div className="flex justify-between">
+                  <span className="flex items-center gap-1 text-slate-400">
+                    <Users className="w-3 h-3" />
+                    Bidders
+                  </span>
+                  <span>{auction.bidders}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Category</span>
+                  <Badge className="bg-white/10 text-slate-300 text-xs">{auction.category}</Badge>
+                </div>
+              </div>
+
+              <div className="text-center mt-8">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="mt-5 w-full rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 text-white hover:brightness-110"
+                >
+                  <Link href={`/auctions/${auction.id}`}>
+                    View Auction{/* (label sebelumnya “View All Auctions” kurang pas untuk detail item) */}
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
     </div>
   );
 }

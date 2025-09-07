@@ -238,13 +238,14 @@ export default function AuctionDetailPage({ tokenId }: { tokenId: string }) {
       {/* Starfield */}
         <Starfield
               density={0.0014}
-              baseSpeed={0.06}
+              speed={0.5}
               maxParallax={14}
               className="z-0"
             />
-
+      <br />
+      <br />
       {/* Navbar */}
-      <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
+      {/* <nav className="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
              <Link href="/" className="flex items-center gap-2">
               <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-400/15 ring-1 ring-indigo-300/25">
@@ -266,7 +267,7 @@ export default function AuctionDetailPage({ tokenId }: { tokenId: string }) {
           </div>
           <WalletConnectButton className="border border-indigo-300/40 text-indigo-200 hover:bg-indigo-400/10" />
         </div>
-      </nav>
+      </nav> */}
 
       {/* Breadcrumb */}
       <div className="border-b border-white/10 bg-white/[0.02]">
@@ -315,7 +316,7 @@ export default function AuctionDetailPage({ tokenId }: { tokenId: string }) {
 
             {/* Tabs */}
             <Tabs defaultValue="bidding" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 bg-black/30 border border-white/10">
+              <TabsList className="bg-white/[0.05] border border-white/10 backdrop-blur-sm">
                 <TabsTrigger value="bidding">Bidding History</TabsTrigger>
                 <TabsTrigger value="domain-info">Domain Info</TabsTrigger>
                 <TabsTrigger value="activity">Activity</TabsTrigger>
