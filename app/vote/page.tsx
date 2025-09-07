@@ -23,6 +23,7 @@ import { getSubmittedDomains } from "@/lib/get-domain-submitted";
 import { getNameMap } from "@/lib/get-name-map";
 import { getAuctionStarted } from "@/lib/get-auction-started";
 import { useApproveAndStartAuction } from "./handleSubmit";
+import { AuctionSkeletonCard } from "@/components/loading-data";
 // import { handleSubmit, useApproveAndStartAuction } from "./handleSubmit";
 
 // --------- MOCK DATA (replace with real fetch) ----------
@@ -48,7 +49,8 @@ export default function VotePage() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [priceRange, setPriceRange] = useState("all");
   const [auctions, setAuctions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { submit, tx } = useApproveAndStartAuction();
 
   type SubmittedVM = {
@@ -61,7 +63,7 @@ export default function VotePage() {
 
   useEffect(() => {
     async function load() {
-      setLoading(true);
+      setIsInitialLoading(true);
       try {
         // 1) Ambil semua submitted events (punyamu sendiri)
         const events = await getSubmittedDomains(); // [{ tokenId, seller }, ...]
@@ -90,7 +92,7 @@ export default function VotePage() {
       } catch (err) {
         console.error("Failed load submitted domains", err);
       } finally {
-        setLoading(false);
+        setIsInitialLoading(false);
       }
     }
     load();
@@ -233,10 +235,14 @@ export default function VotePage() {
       {/* GRID */}
       <section className="py-8 px-6">
         <div className="max-w-7xl mx-auto">
-          {loading ? (
-            <div className="text-center py-20 text-slate-400">Loading submitted domains…</div>
+          {isInitialLoading ? (
+             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                      <AuctionSkeletonCard key={i} />
+                    ))}
+                  </div>
           ) : submitted.length === 0 ? (
-            <div className="text-center py-20 text-slate-400">No submitted domains.</div>
+            <div className="text-center py-20 text-slate-400">Nothing domain ready to be vote.</div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {submitted.map((s) => (
